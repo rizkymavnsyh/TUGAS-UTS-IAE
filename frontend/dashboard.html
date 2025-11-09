@@ -2,25 +2,155 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Delivery Dashboard</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-        button { margin: 5px; padding: 10px; }
+        /* Gaya Dasar */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            background-color: #f4f7f6; 
+            color: #333;
+        }
+        
+        /* Header/Navbar */
+        .header {
+            background-color: #ff5722; /* Warna khas makanan/delivery */
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        /* Tombol Logout */
+        #logoutBtn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #logoutBtn:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Main Content Layout */
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 20px auto;
+            gap: 20px;
+        }
+
+        /* Sidebar (Panel Informasi Pengguna) */
+        .sidebar {
+            width: 300px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            height: fit-content;
+        }
+        .user-info h3 {
+            border-bottom: 2px solid #ff5722;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: #ff5722;
+        }
+        .user-info p {
+            margin: 5px 0;
+            font-size: 1rem;
+        }
+        .user-info strong {
+            display: inline-block;
+            width: 80px;
+        }
+
+        /* Main Panel (Tombol dan Hasil) */
+        .main-panel {
+            flex-grow: 1;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .main-panel h2 {
+            color: #3f51b5;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        /* Grup Tombol */
+        .action-group button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            margin-right: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 1rem;
+        }
+        .action-group button:hover {
+            background-color: #45a049;
+        }
+
+        /* Kotak Hasil */
+        #result {
+            background: #272822; /* Warna latar belakang kode gelap */
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            min-height: 200px;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
-    <h1>Food Delivery Dashboard</h1>
-    <button id="logoutBtn">Logout</button>
-    <hr>
-    
-    <h2>Data from Services (via API Gateway)</h2>
-    <button id="fetchUsersBtn">1. Fetch Users</button>
-    <button id="fetchRestaurantsBtn">2. Fetch Restaurants</button>
-    <button id="fetchOrdersBtn">3. Fetch Orders</button>
 
-    <h3>Result:</h3>
-    <pre id="result">Click a button to fetch data...</pre>
+    <div class="header">
+        <h1>🍽️ Food Delivery Dashboard</h1>
+        <button id="logoutBtn">Logout</button>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="user-info">
+                <h3>User Profile</h3>
+                <p><strong>ID:</strong> <span id="userId">N/A</span></p>
+                <p><strong>Username:</strong> <span id="userUsername">N/A</span></p>
+                <p><strong>Role:</strong> <span id="userRole">N/A</span></p>
+                <p><strong>Service Status:</strong> <span style="color: green;">Online</span></p>
+            </div>
+        </div>
+
+        <div class="main-panel">
+            <h2>API Actions via Gateway</h2>
+            
+            <div class="action-group">
+                <button id="fetchUsersBtn" style="background-color: #3f51b5;">1. Fetch All Users</button>
+                <button id="fetchRestaurantsBtn" style="background-color: #009688;">2. Fetch Restaurants</button>
+                <button id="fetchOrdersBtn" style="background-color: #FF9800;">3. Fetch Orders</button>
+            </div>
+
+            <h3>API Response (JSON)</h3>
+            <pre id="result">Click a button to fetch data from the Microservices via API Gateway...</pre>
+        </div>
+    </div>
 
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
