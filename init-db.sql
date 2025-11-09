@@ -1,0 +1,5 @@
+-- Membuat database untuk setiap layanan
+CREATE DATABASE IF NOT EXISTS users_db;
+CREATE DATABASE IF NOT EXISTS restaurants_db;
+CREATE DATABASE IF NOT EXISTS orders_db;
+CREATE DATABASE IF NOT EXISTS payments_db;
