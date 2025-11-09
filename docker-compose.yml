@@ -1,0 +1,128 @@
+services:
+  # ---------------------------------
+  # DATABASE (MySQL)
+  # ---------------------------------
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+      MYSQL_DATABASE: users_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "3309:3306"
+    # --- TAMBAHAN BARU: HEALTHCHECK ---
+    # Ini akan terus-menerus mengecek apakah MySQL sudah siap
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ---------------------------------
+  # API GATEWAY (Node.js + JWT)
+  # ---------------------------------
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    env_file: ./api-gateway/.env
+    # Gateway akan menunggu semua layanan python menyala
+    depends_on:
+      user-service:
+        condition: service_started
+      restaurant-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+    volumes:
+      - ./api-gateway:/usr/src/app
+      - api_gateway_modules:/usr/src/app/node_modules
+
+  # ---------------------------------
+  # SERVICE 1: USER SERVICE (Flask)
+  # ---------------------------------
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "3001:3001"
+    env_file: ./user-service/.env
+    # --- PERUBAHAN DI SINI ---
+    # Sekarang 'user-service' akan menunggu 'mysql-db'
+    # sampai statusnya 'service_healthy' (sehat)
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    volumes:
+      - ./user-service:/app
+
+  # ---------------------------------
+  # SERVICE 2: RESTAURANT SERVICE (Flask)
+  # ---------------------------------
+  restaurant-service:
+    build: ./restaurant-service
+    container_name: restaurant-service
+    ports:
+      - "3002:3002"
+    env_file: ./restaurant-service/.env
+    # --- PERUBAHAN DI SINI ---
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    volumes:
+      - ./restaurant-service:/app
+
+  # ---------------------------------
+  # SERVICE 3: ORDER SERVICE (Flask)
+  # ---------------------------------
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "3003:3003"
+    env_file: ./order-service/.env
+    # --- PERUBAHAN DI SINI ---
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      # Kita juga tambahkan 'depends_on' untuk layanan lain
+      # yang ia panggil, agar urutannya benar
+      user-service:
+        condition: service_started
+      restaurant-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+    volumes:
+      - ./order-service:/app
+
+  # ---------------------------------
+  # SERVICE 4: PAYMENT SERVICE (Flask)
+  # ---------------------------------
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    ports:
+      - "3004:3004"
+    env_file: ./payment-service/.env
+    # --- PERUBAHAN DI SINI ---
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    volumes:
+      - ./payment-service:/app
+
+# Mendefinisikan volume yang kita gunakan
+volumes:
+  mysql_data:
+  api_gateway_modules: {}
