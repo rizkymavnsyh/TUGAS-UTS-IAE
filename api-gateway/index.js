@@ -1,30 +1,22 @@
-<<<<<<< HEAD
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-// const bcrypt = require('bcryptjs'); // Hapus bcrypt
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-=======
-// =====================
-// API Gateway (Express)
-// =====================
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
-const axios = require('axios');
 
-const app = express();
-const PORT = 3000;
->>>>>>> 8d59c6b7edf52e10b0d566376c848d1fa11c0387
+// Batas waktu yang diperpanjang (30 detik)
+const PROXY_TIMEOUT = 30000; 
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*', 
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+}));
 app.use(express.json());
-<<<<<<< HEAD
 
 // Service URLs (Menggunakan nama service dari Docker Compose)
 const services = {
@@ -34,33 +26,44 @@ const services = {
   paymentService: 'http://payment-service:3004'
 };
 
-// --- HAPUS SELURUH 'const users = [...]' DARI SINI ---
-
-// --- Tambahkan Proxy Publik BARU untuk Login ---
-// Proxy auth requests (login) ke User Service.
-// Ini adalah rute publik dan tidak memerlukan JWT.
+// --- Proxy Publik untuk Login (/auth) ---
 app.use('/auth', createProxyMiddleware({
   target: services['userService'],
   changeOrigin: true,
+  // --- TIMEOUT BARU (30 detik) ---
+  timeout: PROXY_TIMEOUT, 
+  proxyTimeout: PROXY_TIMEOUT, 
+  // --- END TIMEOUT BARU ---
   pathRewrite: {
-    [`^/auth`]: '/auth' // Meneruskan /auth/login -> /auth/login
+    [`^/auth`]: '/auth'
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    if (req.method === 'POST' && req.body) {
+        let bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+        proxyReq.end();
+    }
+  },
+  onError: (err, req, res, target) => {
+    console.error(`[API GATEWAY ERROR] Proxy Error for ${req.path} to ${target.href}:`, err);
+    res.status(504).json({
+      success: false,
+      error: 'Gateway Timeout (504) or connection error with backend service.'
+    });
   }
 }));
 // --- Akhir Proxy Publik ---
 
 
-// --- HAPUS ENDPOINT app.post('/auth/login', ...) DARI SINI ---
-
-// --- HAPUS ENDPOINT app.post('/auth/register', ...) DARI SINI ---
-
-
-// --- Middleware Otentikasi JWT (TETAP SAMA) ---
+// --- Middleware Otentikasi JWT (Sama) ---
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ error: 'Access denied. No token provided.' });
   }
-  const token = authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader.split(' ')[1]; 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
@@ -70,32 +73,17 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-// --- Role-based authorization (TETAP SAMA) ---
-const authorizeRoles = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied. Insufficient permissions.' });
-    }
-    next();
-  };
-};
-
-// --- Verify token endpoint (TETAP SAMA) ---
-app.get('/auth/verify', authenticateJWT, (req, res) => {
-  res.json({
-    success: true,
-    user: req.user
-  });
-});
-
-
-// Proxy middleware with JWT forwarding (TETAP SAMA)
+// Proxy middleware dengan JWT forwarding
 const createAuthProxy = (service) => {
   return createProxyMiddleware({
     target: services[service],
     changeOrigin: true,
+    // --- TIMEOUT BARU (30 detik) ---
+    timeout: PROXY_TIMEOUT, 
+    proxyTimeout: PROXY_TIMEOUT,
+    // --- END TIMEOUT BARU ---
     pathRewrite: {
-      [`^/api/${service.replace('Service', '').toLowerCase()}`]: '' // /api/user -> /
+      [`^/api/${service.replace('Service', '').toLowerCase()}`]: '' 
     },
     onProxyReq: (proxyReq, req, res) => {
       // Forward user info to backend services
@@ -104,17 +92,24 @@ const createAuthProxy = (service) => {
         proxyReq.setHeader('X-User-Role', req.user.role);
         proxyReq.setHeader('X-User-Username', req.user.username);
       }
+    },
+    onError: (err, req, res, target) => {
+      console.error(`[API GATEWAY ERROR] Protected Proxy Error for ${req.path} to ${target.href}:`, err);
+      res.status(504).json({
+        success: false,
+        error: 'Gateway Timeout or connection refused by backend service.'
+      });
     }
   });
 };
 
-// Protected routes (require authentication) (TETAP SAMA)
+// Protected routes (memerlukan authentication)
 app.use('/api/user', authenticateJWT, createAuthProxy('userService'));
 app.use('/api/restaurant', authenticateJWT, createAuthProxy('restaurantService'));
 app.use('/api/order', authenticateJWT, createAuthProxy('orderService'));
 app.use('/api/payment', authenticateJWT, createAuthProxy('paymentService'));
 
-// Public health check route (TETAP SAMA)
+// Public health check route
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -123,7 +118,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Error handling (TETAP SAMA)
+// Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -132,37 +127,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// (TETAP SAMA)
 app.listen(PORT, () => {
   console.log(`API Gateway with JWT running on port ${PORT}`);
   console.log(`Login endpoint: http://localhost:${PORT}/auth/login`);
 });
-=======
-app.use(morgan('dev'));
-
-// Alamat service lain
-const USER_SERVICE_URL = 'http://localhost:5001'; // ganti sesuai docker-compose kalau pakai Docker
-
-// Route login
-app.post('/auth/login', async (req, res) => {
-  try {
-    const response = await axios.post(`${USER_SERVICE_URL}/auth/login`, req.body);
-    res.json(response.data);
-  } catch (error) {
-    console.error('❌ Error login gateway:', error.message);
-    if (error.response) {
-      res.status(error.response.status).json(error.response.data);
-    } else {
-      res.status(500).json({ error: 'User service not reachable' });
-    }
-  }
-});
-
-// Route default
-app.get('/', (req, res) => {
-  res.send('✅ API Gateway is running on port 3000');
-});
-
-// Jalankan server
-app.listen(PORT, () => console.log(`🚀 API Gateway running at http://localhost:${PORT}`));
->>>>>>> 8d59c6b7edf52e10b0d566376c848d1fa11c0387

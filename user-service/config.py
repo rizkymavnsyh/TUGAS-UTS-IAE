@@ -9,3 +9,5 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     PORT = int(os.getenv('PORT', 3001))
     SERVICE_NAME = os.getenv('SERVICE_NAME', 'user-service')
+    # Penambahan yang diperlukan agar Flask dapat menemukan JWT_SECRET
+    JWT_SECRET = os.getenv('JWT_SECRET', 'your-very-secret-jwt-key-change-in-production')

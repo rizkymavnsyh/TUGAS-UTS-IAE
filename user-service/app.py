@@ -7,6 +7,22 @@ import os
 import requests
 import jwt 
 from datetime import datetime, timedelta, timezone 
+import time # Import modul time untuk sleep
+
+# Fungsi untuk menunggu database siap
+def wait_for_db(app, max_retries=10, delay=2):
+    with app.app_context():
+        for i in range(max_retries):
+            try:
+                db.session.execute(db.text('SELECT 1')).scalar()
+                print("Database connection successful!")
+                return
+            except Exception as e:
+                print(f"Database not ready, retrying in {delay}s... (Attempt {i+1}/{max_retries})")
+                print(f"Error: {e}")
+                time.sleep(delay)
+        raise Exception("Failed to connect to the database after multiple retries.")
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -47,7 +63,8 @@ class UserList(Resource):
     @users_ns.marshal_list_with(user_model)
     def get(self):
         """Get all users"""
-        users = User.query.all()
+        # --- Operasi yang sebelumnya mungkin hang ---
+        users = User.query.all() 
         return [user.to_dict() for user in users]
 
     @users_ns.doc('create_user')
@@ -82,7 +99,7 @@ class UserResource(Resource):
             return {'error': 'User not found'}, 404
         return user.to_dict()
 
-# --- Endpoint Login BARU (ini yang akan dipakai Gateway) ---
+# --- Endpoint Login (Sama) ---
 auth_ns = api.namespace('auth', description='Authentication operations')
 login_model = api.model('LoginInput', {
     'username': fields.String(required=True),
@@ -100,8 +117,6 @@ class LoginResource(Resource):
         user = User.query.filter_by(username=data['username']).first()
 
         if user and user.check_password(data['password']):
-            # --- START PERBAIKAN BUG JWT TIMEZONE (Menggunakan timestamp integer) ---
-            
             # Hitung waktu kadaluarsa (24 jam dari sekarang)
             expiration_time = datetime.now(timezone.utc) + timedelta(hours=24)
             
@@ -110,16 +125,11 @@ class LoginResource(Resource):
                 'id': user.id,
                 'username': user.username,
                 'role': user.role,
-                # Ubah datetime object menjadi integer timestamp (PyJWT preferred format)
                 'exp': int(expiration_time.timestamp()) 
             }
             
-            # Ambil SECRET dari config
             token = jwt.encode(token_payload, Config.JWT_SECRET, algorithm='HS256')
             
-            # --- END PERBAIKAN BUG JWT TIMEZONE ---
-            
-            # Kembalikan response sukses
             return {
                 'success': True,
                 'token': token,
@@ -130,10 +140,9 @@ class LoginResource(Resource):
                 }
             }, 200
         
-        # Jika gagal, kirim error 401
         return {'error': 'Invalid credentials'}, 401
 
-# --- Internal Endpoints (Tidak Berubah) ---
+# --- Internal Endpoints (Sama) ---
 
 @app.route('/internal/users/<int:user_id>')
 def get_user_internal(user_id):
@@ -162,12 +171,15 @@ def update_user_balance(user_id):
     db.session.commit()
     return jsonify(user.to_dict())
 
-# Health check
+# Health check (Sama)
 @app.route('/health')
 def health_check():
     return jsonify({'status': 'healthy', 'service': os.getenv('SERVICE_NAME')})
 
 if __name__ == '__main__':
+    # --- Panggil wait_for_db sebelum create_all() ---
+    wait_for_db(app) 
+    
     with app.app_context():
         db.create_all() # Membuat tabel jika belum ada
         

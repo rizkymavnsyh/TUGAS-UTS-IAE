@@ -14,7 +14,6 @@ services:
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
       - "3309:3306"
-    # --- TAMBAHAN BARU: HEALTHCHECK ---
     # Ini akan terus-menerus mengecek apakah MySQL sudah siap
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root"]
@@ -55,9 +54,7 @@ services:
     ports:
       - "3001:3001"
     env_file: ./user-service/.env
-    # --- PERUBAHAN DI SINI ---
-    # Sekarang 'user-service' akan menunggu 'mysql-db'
-    # sampai statusnya 'service_healthy' (sehat)
+    restart: on-failure  # Solusi untuk race condition DB
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -73,7 +70,7 @@ services:
     ports:
       - "3002:3002"
     env_file: ./restaurant-service/.env
-    # --- PERUBAHAN DI SINI ---
+    restart: on-failure  # Solusi untuk race condition DB
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -89,12 +86,10 @@ services:
     ports:
       - "3003:3003"
     env_file: ./order-service/.env
-    # --- PERUBAHAN DI SINI ---
+    restart: on-failure  # Solusi untuk race condition DB
     depends_on:
       mysql-db:
         condition: service_healthy
-      # Kita juga tambahkan 'depends_on' untuk layanan lain
-      # yang ia panggil, agar urutannya benar
       user-service:
         condition: service_started
       restaurant-service:
@@ -113,7 +108,7 @@ services:
     ports:
       - "3004:3004"
     env_file: ./payment-service/.env
-    # --- PERUBAHAN DI SINI ---
+    restart: on-failure  # Solusi untuk race condition DB
     depends_on:
       mysql-db:
         condition: service_healthy
