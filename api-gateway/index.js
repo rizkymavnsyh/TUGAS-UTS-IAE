@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
@@ -7,10 +8,23 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+=======
+// =====================
+// API Gateway (Express)
+// =====================
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+const axios = require('axios');
+
+const app = express();
+const PORT = 3000;
+>>>>>>> 8d59c6b7edf52e10b0d566376c848d1fa11c0387
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+<<<<<<< HEAD
 
 // Service URLs (Menggunakan nama service dari Docker Compose)
 const services = {
@@ -123,3 +137,32 @@ app.listen(PORT, () => {
   console.log(`API Gateway with JWT running on port ${PORT}`);
   console.log(`Login endpoint: http://localhost:${PORT}/auth/login`);
 });
+=======
+app.use(morgan('dev'));
+
+// Alamat service lain
+const USER_SERVICE_URL = 'http://localhost:5001'; // ganti sesuai docker-compose kalau pakai Docker
+
+// Route login
+app.post('/auth/login', async (req, res) => {
+  try {
+    const response = await axios.post(`${USER_SERVICE_URL}/auth/login`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    console.error('❌ Error login gateway:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'User service not reachable' });
+    }
+  }
+});
+
+// Route default
+app.get('/', (req, res) => {
+  res.send('✅ API Gateway is running on port 3000');
+});
+
+// Jalankan server
+app.listen(PORT, () => console.log(`🚀 API Gateway running at http://localhost:${PORT}`));
+>>>>>>> 8d59c6b7edf52e10b0d566376c848d1fa11c0387
