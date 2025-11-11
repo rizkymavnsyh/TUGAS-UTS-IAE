@@ -39,7 +39,16 @@ CORS(app)
 # Initialize API documentation (Swagger)
 api = Api(app, doc='/api-docs/', version='1.0',
           title='User Service API',
-          description='API for managing users and balance')
+          description='API for managing users and balance',
+          security='Bearer Auth',
+          authorizations={
+              'Bearer Auth': {
+                  'type': 'apiKey',
+                  'in': 'header',
+                  'name': 'Authorization',
+                  'description': 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+              }
+          })
 
 # Define data models for documentation
 user_model = api.model('User', {
@@ -59,14 +68,14 @@ users_ns = api.namespace('users', description='User operations')
 
 @users_ns.route('/')
 class UserList(Resource):
-    @users_ns.doc('list_users')
+    @users_ns.doc('list_users', security='Bearer Auth')
     @users_ns.marshal_list_with(user_model)
     def get(self):
         """Get all users"""
         users = User.query.all() 
         return [user.to_dict() for user in users]
 
-    @users_ns.doc('create_user')
+    @users_ns.doc('create_user', security='Bearer Auth')
     @users_ns.expect(user_input_model)
     @users_ns.marshal_with(user_model, code=201)
     def post(self):
@@ -97,7 +106,7 @@ class UserList(Resource):
 @users_ns.response(404, 'User not found')
 @users_ns.param('id', 'The user identifier')
 class UserResource(Resource):
-    @users_ns.doc('get_user')
+    @users_ns.doc('get_user', security='Bearer Auth')
     @users_ns.marshal_with(user_model)
     def get(self, id):
         """Get user by ID"""
@@ -106,7 +115,7 @@ class UserResource(Resource):
             return {'error': 'User not found'}, 404
         return user.to_dict()
 
-    @users_ns.doc('update_user')
+    @users_ns.doc('update_user', security='Bearer Auth')
     @users_ns.expect(user_input_model)
     @users_ns.marshal_with(user_model)
     def put(self, id):
@@ -135,8 +144,8 @@ class UserResource(Resource):
         db.session.commit()
         return user.to_dict()
 
-    @users_ns.doc('delete_user')
-    @users_ns.response(204, 'User deleted')
+    @users_ns.doc('delete_user', security='Bearer Auth')
+    @users_ns.response(200, 'User deleted successfully')
     def delete(self, id):
         """Delete user by ID"""
         user = User.query.get(id)
@@ -145,7 +154,7 @@ class UserResource(Resource):
 
         db.session.delete(user)
         db.session.commit()
-        return '', 204
+        return {'message': 'User deleted successfully'}, 200
 
 # --- Endpoint Login & Refresh ---
 auth_ns = api.namespace('auth', description='Authentication operations')

@@ -1,659 +1,1168 @@
 {
-	"info": {
-		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-		"name": "UTS IAE - Food Delivery Microservices [FULL CRUD]",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"description": "Koleksi API LENGKAP dengan semua operasi CRUD (GET, POST, PUT, DELETE) untuk proyek Microservices Food Delivery.",
-		"_uid": "987654-fullcrud"
-	},
-	"item": [
-		{
-			"name": "1. AUTHENTICATION",
-			"description": "Untuk mendapatkan Token JWT dengan role-based access.\n\n**Available Roles:**\n- `admin`: Full CRUD access (GET, POST, PUT, DELETE) to all services\n- `user`: Read-only access (GET only) to all services\n\n**Login Credentials:**\n- Admin: username=`admin`, password=`admin123`\n- User: username=`rizky`, password=`user123`",
-			"item": [
-				{
-					"name": "POST Login (Get JWT Token)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "login"]
-						}
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"var jsonData = pm.response.json();",
-									"if (jsonData.success) {",
-									"    pm.collectionVariables.set(\"token\", jsonData.access_token || jsonData.token);",
-									"    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
-									"    pm.collectionVariables.set(\"user_id\", jsonData.user.id);",
-									"    console.log(\"Access Token set: \" + (jsonData.access_token || jsonData.token).substring(0, 15) + \"...\");",
-									"    console.log(\"Refresh Token set: \" + jsonData.refresh_token.substring(0, 15) + \"...\");",
-									"    console.log(\"Access Token expires in: \" + jsonData.token_info.access_token_expires_in);",
-									"    console.log(\"Refresh Token expires in: \" + jsonData.token_info.refresh_token_expires_in);",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					]
-				},
-				{
-					"name": "POST Login as User (Read-Only Access)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"rizky\",\n    \"password\": \"user123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "login"]
-						}
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"var jsonData = pm.response.json();",
-									"if (jsonData.success) {",
-									"    pm.collectionVariables.set(\"token\", jsonData.access_token || jsonData.token);",
-									"    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
-									"    pm.collectionVariables.set(\"user_id\", jsonData.user.id);",
-									"    console.log(\"Access Token set: \" + (jsonData.access_token || jsonData.token).substring(0, 15) + \"...\");",
-									"    console.log(\"Refresh Token set: \" + jsonData.refresh_token.substring(0, 15) + \"...\");",
-									"    console.log(\"Logged in as User (read-only): \" + jsonData.user.username);",
-									"    console.log(\"Role: \" + jsonData.user.role);",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					]
-				},
-				{
-					"name": "POST Refresh Token (Get New Access Token)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{refresh_token}}",
-								"description": "Refresh Token"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/auth/refresh",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "refresh"]
-						}
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"var jsonData = pm.response.json();",
-									"if (jsonData.success) {",
-									"    pm.collectionVariables.set(\"token\", jsonData.access_token || jsonData.token);",
-									"    console.log(\"New Access Token set: \" + (jsonData.access_token || jsonData.token).substring(0, 15) + \"...\");",
-									"    console.log(\"Access Token expires in: \" + jsonData.token_info.access_token_expires_in);",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "2. USER SERVICE - FULL CRUD",
-			"description": "Operasi lengkap User Service (GET, POST, PUT, DELETE).\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- POST, PUT, DELETE: `admin` only 🔒",
-			"item": [
-				{
-					"name": "GET All Users",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/user/users/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "user", "users", ""]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "GET User by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/user/users/{{user_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "user", "users", "{{user_id}}"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "POST Create User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"newuser\",\n    \"name\": \"New User\",\n    \"password\": \"password123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/user/users/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "user", "users", ""]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "PUT Update User",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated User Name\",\n    \"password\": \"newpassword123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/user/users/2",
-							"host": ["{{base_url}}"],
-							"path": ["api", "user", "users", "2"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "DELETE User",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/user/users/2",
-							"host": ["{{base_url}}"],
-							"path": ["api", "user", "users", "2"]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "3. RESTAURANT SERVICE - FULL CRUD",
-			"description": "Operasi lengkap Restaurant Service (GET, POST, PUT, DELETE).\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- POST, PUT, DELETE: `admin` only 🔒",
-			"item": [
-				{
-					"name": "GET All Restaurants",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", ""]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "GET Restaurant by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", "{{restaurant_id}}"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "POST Create Restaurant",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Burger House\",\n    \"address\": \"456 Oak Avenue\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", ""]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "PUT Update Restaurant",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Restaurant Name\",\n    \"address\": \"789 New Street\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/1",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", "1"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "DELETE Restaurant",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/2",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", "2"]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "4. MENU ITEMS - FULL CRUD",
-			"description": "Operasi lengkap Menu Items (GET, POST, PUT, DELETE).\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- POST, PUT, DELETE: `admin` only 🔒",
-			"item": [
-				{
-					"name": "GET All Menu Items by Restaurant",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", "{{restaurant_id}}", "menu"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "GET Menu Item by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu/{{menu_item_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", "{{restaurant_id}}", "menu", "{{menu_item_id}}"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "POST Create Menu Item",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Cheeseburger\",\n    \"description\": \"Juicy beef burger with cheese\",\n    \"price\": 12.99\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", "{{restaurant_id}}", "menu"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "PUT Update Menu Item",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Deluxe Pepperoni Pizza\",\n    \"description\": \"Extra cheese and premium pepperoni\",\n    \"price\": 18.99\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu/{{menu_item_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", "{{restaurant_id}}", "menu", "{{menu_item_id}}"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "DELETE Menu Item",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu/2",
-							"host": ["{{base_url}}"],
-							"path": ["api", "restaurant", "restaurants", "{{restaurant_id}}", "menu", "2"]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "5. ORDER SERVICE",
-			"description": "Order Service operations.\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- POST orders: `admin` only 🔒",
-			"item": [
-				{
-					"name": "GET All Orders",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/order/orders/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "order", "orders", ""]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "POST Create Order (Full Flow)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"user_id\": {{user_id}},\n    \"restaurant_id\": {{restaurant_id}},\n    \"items\": [\n        {\n            \"menu_item_id\": {{menu_item_id}},\n            \"quantity\": 2\n        }\n    ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/order/orders/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "order", "orders", ""]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "6. PAYMENT SERVICE - FULL CRUD",
-			"description": "Payment Service operations. Note: PUT/DELETE for demo only - in production, transactions should be immutable.\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- PUT, DELETE: `admin` only 🔒",
-			"item": [
-				{
-					"name": "GET All Transactions",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/payment/payments/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "payment", "payments", ""]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "GET Transaction by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/payment/payments/1",
-							"host": ["{{base_url}}"],
-							"path": ["api", "payment", "payments", "1"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "PUT Update Transaction Status (DEMO ONLY)",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"status\": \"REFUNDED\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/payment/payments/1",
-							"host": ["{{base_url}}"],
-							"path": ["api", "payment", "payments", "1"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "DELETE Transaction (DEMO ONLY)",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/payment/payments/2",
-							"host": ["{{base_url}}"],
-							"path": ["api", "payment", "payments", "2"]
-						}
-					},
-					"response": []
-				}
-			]
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://localhost:3000",
-			"type": "string",
-			"description": "URL dasar API Gateway"
-		},
-		{
-			"key": "token",
-			"value": "",
-			"type": "string",
-			"description": "Access Token (auto-filled after login, expires in 1 hour)"
-		},
-		{
-			"key": "refresh_token",
-			"value": "",
-			"type": "string",
-			"description": "Refresh Token (auto-filled after login, expires in 7 days)"
-		},
-		{
-			"key": "user_id",
-			"value": "1",
-			"type": "string",
-			"description": "User ID for testing"
-		},
-		{
-			"key": "restaurant_id",
-			"value": "1",
-			"type": "string",
-			"description": "Restaurant ID for testing"
-		},
-		{
-			"key": "menu_item_id",
-			"value": "1",
-			"type": "string",
-			"description": "Menu Item ID for testing"
-		}
-	]
+    "info": {
+        "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "name": "UTS IAE - Food Delivery Microservices [FULL CRUD]",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "Koleksi API LENGKAP dengan semua operasi CRUD (GET, POST, PUT, DELETE) untuk proyek Microservices Food Delivery.",
+        "_uid": "987654-fullcrud"
+    },
+    "item": [
+        {
+            "name": "1. AUTHENTICATION",
+            "description": "Untuk mendapatkan Token JWT dengan role-based access.\n\n**Available Roles:**\n- `admin`: Full CRUD access (GET, POST, PUT, DELETE) to all services\n- `user`: Read-only access (GET only) to all services\n\n**Login Credentials:**\n- Admin: username=`admin`, password=`admin123`\n- User: username=`rizky`, password=`user123`",
+            "item": [
+                {
+                    "name": "POST Login (Get JWT Token)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.success) {",
+                                    "    pm.collectionVariables.set(\"token\", jsonData.access_token || jsonData.token);",
+                                    "    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
+                                    "    pm.collectionVariables.set(\"user_id\", jsonData.user.id);",
+                                    "    console.log(\"Access Token set: \" + (jsonData.access_token || jsonData.token).substring(0, 15) + \"...\");",
+                                    "    console.log(\"Refresh Token set: \" + jsonData.refresh_token.substring(0, 15) + \"...\");",
+                                    "    console.log(\"Access Token expires in: \" + jsonData.token_info.access_token_expires_in);",
+                                    "    console.log(\"Refresh Token expires in: \" + jsonData.token_info.refresh_token_expires_in);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "description": "**Error Example (401 Unauthorized):**\n```json\n{\n    \"error\": \"Invalid credentials\"\n}\n```"
+                },
+                {
+                    "name": "POST Seed Read-Only User (run once before User Login)",
+                    "description": "Membuat user default `rizky` dengan role read-only. Jalankan sekali setelah login sebagai admin agar request \"POST Login as User\" tidak gagal karena akun belum tersedia.\n\n**Error Example (400 Bad Request):**\n```json\n{\n    \"error\": \"Username already exists\"\n}\n```",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "description": "Gunakan token admin dari request pertama."
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"rizky\",\n    \"name\": \"Rizky ReadOnly\",\n    \"password\": \"user123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/user/users/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user",
+                                "users",
+                                ""
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201 (created) atau 400 (sudah ada)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                                    "});",
+                                    "const username = 'rizky';",
+                                    "",
+                                    "if (pm.response.code === 201) {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set(\"user_id\", jsonData.id);",
+                                    "    console.log(\"Seeded read-only user with id: \" + jsonData.id);",
+                                    "} else {",
+                                    "    console.log(\"User sudah ada. Ambil ID dari daftar users...\");",
+                                    "    pm.sendRequest({",
+                                    "        url: pm.collectionVariables.get('base_url') + '/api/user/users/',",
+                                    "        method: 'GET',",
+                                    "        header: {",
+                                    "            'Authorization': 'Bearer ' + pm.collectionVariables.get('token')",
+                                    "        }",
+                                    "    }, function (err, res) {",
+                                    "        if (!err && res.code === 200) {",
+                                    "            const users = res.json();",
+                                    "            const existing = users.find(function (u) { return u.username === username; });",
+                                    "            if (existing) {",
+                                    "                pm.collectionVariables.set('user_id', existing.id);",
+                                    "                console.log('Existing user id set: ' + existing.id);",
+                                    "            } else {",
+                                    "                console.warn('User rizky tidak ditemukan di daftar users.');",
+                                    "            }",
+                                    "        } else {",
+                                    "            console.error('Gagal mengambil daftar users untuk mencari username rizky.', err || res.status);",
+                                    "        }",
+                                    "    });",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "POST Login as User (Read-Only Access)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"rizky\",\n    \"password\": \"user123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.success) {",
+                                    "    pm.collectionVariables.set(\"token\", jsonData.access_token || jsonData.token);",
+                                    "    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
+                                    "    pm.collectionVariables.set(\"user_id\", jsonData.user.id);",
+                                    "    console.log(\"Access Token set: \" + (jsonData.access_token || jsonData.token).substring(0, 15) + \"...\");",
+                                    "    console.log(\"Refresh Token set: \" + jsonData.refresh_token.substring(0, 15) + \"...\");",
+                                    "    console.log(\"Logged in as User (read-only): \" + jsonData.user.username);",
+                                    "    console.log(\"Role: \" + jsonData.user.role);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "description": "**Error Example (401 Unauthorized):**\n```json\n{\n    \"error\": \"Invalid credentials\"\n}\n```"
+                },
+                {
+                    "name": "POST Refresh Token (Get New Access Token)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{refresh_token}}",
+                                "description": "Refresh Token"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/refresh",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "refresh"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.success) {",
+                                    "    pm.collectionVariables.set(\"token\", jsonData.access_token || jsonData.token);",
+                                    "    console.log(\"New Access Token set: \" + (jsonData.access_token || jsonData.token).substring(0, 15) + \"...\");",
+                                    "    console.log(\"Access Token expires in: \" + jsonData.token_info.access_token_expires_in);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "description": "**Error Example (401 Unauthorized):**\n```json\n{\n    \"error\": \"Invalid refresh token\"\n}\n```"
+                }
+            ]
+        },
+        {
+            "name": "2. USER SERVICE - FULL CRUD",
+            "description": "Operasi lengkap User Service (GET, POST, PUT, DELETE).\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- POST, PUT, DELETE: `admin` only 🔒",
+            "item": [
+                {
+                    "name": "GET All Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/user/users/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user",
+                                "users",
+                                ""
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (401 Unauthorized):**\n```json\n{\n    \"error\": \"Access denied. No token provided.\"\n}\n```"
+                },
+                {
+                    "name": "GET User by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/user/users/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user",
+                                "users",
+                                "{{user_id}}"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"User not found\"\n}\n```"
+                },
+                {
+                    "name": "POST Create User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"newuser\",\n    \"name\": \"New User\",\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/user/users/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user",
+                                "users",
+                                ""
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (400 Bad Request):**\n```json\n{\n    \"error\": \"Username already exists\"\n}\n```"
+                },
+                {
+                    "name": "PUT Update User",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated User Name\",\n    \"password\": \"newpassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/user/users/2",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user",
+                                "users",
+                                "2"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"User not found\"\n}\n```"
+                },
+                {
+                    "name": "DELETE User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/user/users/2",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user",
+                                "users",
+                                "2"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// [FIX] Handle 204 No Content for successful DELETE",
+                                    "pm.test(\"Status code is 204 (No Content) or 200 (OK)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"User not found\"\n}\n```"
+                }
+            ]
+        },
+        {
+            "name": "3. RESTAURANT SERVICE - FULL CRUD",
+            "description": "Operasi lengkap Restaurant Service (GET, POST, PUT, DELETE).\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- POST, PUT, DELETE: `admin` only 🔒",
+            "item": [
+                {
+                    "name": "GET All Restaurants",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                ""
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (401 Unauthorized):**\n```json\n{\n    \"error\": \"Access denied. No token provided.\"\n}\n```"
+                },
+                {
+                    "name": "GET Restaurant by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                "{{restaurant_id}}"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"Restaurant not found\"\n}\n```"
+                },
+                {
+                    "name": "POST Create Restaurant",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Burger House\",\n    \"address\": \"456 Oak Avenue\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                ""
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (403 Forbidden):**\n```json\n{\n    \"error\": \"Access denied. Admin role required for this operation.\",\n    \"operation\": \"POST\",\n    \"your_role\": \"user\",\n    \"required_role\": \"admin\"\n}\n```"
+                },
+                {
+                    "name": "PUT Update Restaurant",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated Restaurant Name\",\n    \"address\": \"789 New Street\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"Restaurant not found\"\n}\n```"
+                },
+                {
+                    "name": "DELETE Restaurant",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/2",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                "2"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// [FIX] Handle 204 No Content for successful DELETE",
+                                    "pm.test(\"Status code is 204 (No Content) or 200 (OK)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"Restaurant not found\"\n}\n```"
+                }
+            ]
+        },
+        {
+            "name": "4. MENU ITEMS - FULL CRUD",
+            "description": "Operasi lengkap Menu Items (GET, POST, PUT, DELETE).\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- POST, PUT, DELETE: `admin` only 🔒",
+            "item": [
+                {
+                    "name": "GET All Menu Items by Restaurant",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                "{{restaurant_id}}",
+                                "menu"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (401 Unauthorized):**\n```json\n{\n    \"error\": \"Access denied. No token provided.\"\n}\n```"
+                },
+                {
+                    "name": "GET Menu Item by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu/{{menu_item_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                "{{restaurant_id}}",
+                                "menu",
+                                "{{menu_item_id}}"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"Menu item not found\"\n}\n```"
+                },
+                {
+                    "name": "POST Create Menu Item",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Cheeseburger\",\n    \"description\": \"Juicy beef burger with cheese\",\n    \"price\": 12.99\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                "{{restaurant_id}}",
+                                "menu"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (403 Forbidden):**\n```json\n{\n    \"error\": \"Access denied. Admin role required for this operation.\",\n    \"operation\": \"POST\",\n    \"your_role\": \"user\",\n    \"required_role\": \"admin\"\n}\n```"
+                },
+                {
+                    "name": "PUT Update Menu Item",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Deluxe Pepperoni Pizza\",\n    \"description\": \"Extra cheese and premium pepperoni\",\n    \"price\": 18.99\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu/{{menu_item_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                "{{restaurant_id}}",
+                                "menu",
+                                "{{menu_item_id}}"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"Menu item not found\"\n}\n```"
+                },
+                {
+                    "name": "DELETE Menu Item",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/restaurant/restaurants/{{restaurant_id}}/menu/2",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "restaurant",
+                                "restaurants",
+                                "{{restaurant_id}}",
+                                "menu",
+                                "2"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// [FIX] Handle 204 No Content for successful DELETE",
+                                    "pm.test(\"Status code is 204 (No Content) or 200 (OK)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"Menu item not found\"\n}\n```"
+                }
+            ]
+        },
+        {
+            "name": "5. ORDER SERVICE",
+            "description": "Order Service operations.\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- POST, PUT, DELETE orders: `admin` only 🔒",
+            "item": [
+                {
+                    "name": "GET All Orders",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/order/orders/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "order",
+                                "orders",
+                                ""
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (401 Unauthorized):**\n```json\n{\n    \"error\": \"Access denied. No token provided.\"\n}\n```"
+                },
+                {
+                    "name": "POST Create Order (Full Flow)",
+                    "description": "Membuat order baru dan otomatis menyimpan ID-nya sebagai variabel 'order_id'\n\n**Error Example (400 Bad Request):**\n```json\n{\n    \"error\": \"Payment failed\"\n}\n```",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": {{user_id}},\n    \"restaurant_id\": {{restaurant_id}},\n    \"items\": [\n        {\n            \"menu_item_id\": {{menu_item_id}},\n            \"quantity\": 2\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/order/orders/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "order",
+                                "orders",
+                                ""
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// [FIX] Ambil 'id' dari response dan simpan sebagai 'order_id'",
+                                    "pm.test(\"Status code is 201 (Created)\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData && jsonData.id) {",
+                                    "    pm.collectionVariables.set(\"order_id\", jsonData.id);",
+                                    "    console.log(\"New Order ID set: \" + jsonData.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "GET Order by ID",
+                    "description": "Mengambil order berdasarkan {{order_id}} yang disimpan\n\n**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"Order not found\"\n}\n```",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/order/orders/{{order_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "order",
+                                "orders",
+                                "{{order_id}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT Update Order Status (Demo)",
+                    "description": "Mengubah status order berdasarkan {{order_id}} yang disimpan\n\n**Error Example (400 Bad Request):**\n```json\n{\n    \"error\": \"Invalid status. Allowed: ['PENDING', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDED']\"\n}\n```",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"CANCELLED\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/order/orders/{{order_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "order",
+                                "orders",
+                                "{{order_id}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "DELETE Order (Demo)",
+                    "description": "Menghapus order berdasarkan {{order_id}} yang disimpan\n\n**Error Example (400 Bad Request):**\n```json\n{\n    \"error\": \"Cannot delete a paid order. Please set status to CANCELLED or REFUNDED instead.\"\n}\n```",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/order/orders/{{order_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "order",
+                                "orders",
+                                "{{order_id}}"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// [FIX] Handle 204 No Content for successful DELETE",
+                                    "pm.test(\"Status code is 204 (No Content) or 200 (OK)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "6. PAYMENT SERVICE - FULL CRUD",
+            "description": "Payment Service operations. Note: PUT/DELETE for demo only - in production, transactions should be immutable.\n\n**Role Requirements:**\n- GET requests: `admin` and `user` ✅\n- PUT, DELETE: `admin` only 🔒",
+            "item": [
+                {
+                    "name": "GET All Transactions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/payment/payments/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payment",
+                                "payments",
+                                ""
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (401 Unauthorized):**\n```json\n{\n    \"error\": \"Access denied. No token provided.\"\n}\n```"
+                },
+                {
+                    "name": "GET Transaction by ID",
+                    "description": "Mengambil transaksi berdasarkan {{order_id}} (jika ada)\n\n**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"Transaction not found\"\n}\n```",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/payment/payments/{{order_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payment",
+                                "payments",
+                                "{{order_id}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST Process Payment (Create Transaction)",
+                    "description": "Membuat transaksi pembayaran melalui Payment Service (internal). Wajib menggunakan token admin karena POST dibatasi oleh API Gateway.\n\n**Error Example (400 Bad Request):**\n```json\n{\n    \"error\": \"Insufficient balance\"\n}\n```",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": {{user_id}},\n    \"order_id\": {{order_id}},\n    \"amount\": 120000\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/payment/internal/process",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payment",
+                                "internal",
+                                "process"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200 (success) or 400 (validation failure)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set(\"payment_transaction_id\", jsonData.id || jsonData.transaction_id);",
+                                    "    console.log(\"Payment succeeded. Transaction ID: \" + pm.collectionVariables.get(\"payment_transaction_id\"));",
+                                    "} else {",
+                                    "    console.warn(\"Payment failed: \" + pm.response.text());",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "PUT Update Transaction Status (DEMO ONLY)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"REFUNDED\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/payment/payments/{{order_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payment",
+                                "payments",
+                                "{{order_id}}"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "description": "**Error Example (400 Bad Request):**\n```json\n{\n    \"error\": \"Invalid status. Allowed: ['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED']\"\n}\n```"
+                },
+                {
+                    "name": "DELETE Transaction (DEMO ONLY)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/payment/payments/2",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payment",
+                                "payments",
+                                "2"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// [FIX] Handle 204 No Content for successful DELETE",
+                                    "pm.test(\"Status code is 204 (No Content) or 200 (OK)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "description": "**Error Example (404 Not Found):**\n```json\n{\n    \"error\": \"Transaction not found\"\n}\n```"
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:3000",
+            "type": "string",
+            "description": "URL dasar API Gateway"
+        },
+        {
+            "key": "token",
+            "value": "",
+            "type": "string",
+            "description": "Access Token (auto-filled after login, expires in 1 hour)"
+        },
+        {
+            "key": "refresh_token",
+            "value": "",
+            "type": "string",
+            "description": "Refresh Token (auto-filled after login, expires in 7 days)"
+        },
+        {
+            "key": "user_id",
+            "value": "1",
+            "type": "string",
+            "description": "User ID for testing"
+        },
+        {
+            "key": "restaurant_id",
+            "value": "1",
+            "type": "string",
+            "description": "Restaurant ID for testing"
+        },
+        {
+            "key": "menu_item_id",
+            "value": "1",
+            "type": "string",
+            "description": "Menu Item ID for testing"
+        },
+        {
+            "key": "order_id",
+            "value": "1",
+            "type": "string",
+            "description": "Order ID (diisi otomatis oleh 'POST Create Order')"
+        }
+    ]
 }
+

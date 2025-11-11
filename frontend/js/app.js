@@ -44,7 +44,7 @@
     attachEventHandlers();
 
     checkGatewayHealth();
-    ['users', 'restaurants'].forEach(handleServiceFetch);
+    ['users', 'restaurants', 'orders', 'payments'].forEach(handleServiceFetch);
 
     function attachEventHandlers() {
         const logoutBtn = document.getElementById('logoutBtn');
@@ -301,9 +301,9 @@
 
     function formatCurrency(value) {
         const amount = Number(value) || 0;
-        return new Intl.NumberFormat('id-ID', {
+        return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'IDR',
+            currency: 'USD',
             maximumFractionDigits: 0
         }).format(amount);
     }

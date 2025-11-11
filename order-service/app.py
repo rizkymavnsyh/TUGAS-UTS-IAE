@@ -14,9 +14,35 @@ CORS(app)
 
 api = Api(app, doc='/api-docs/', version='1.0',
           title='Order Service API',
-          description='API for creating and managing orders')
+          description='API for creating and managing orders',
+          security='Bearer Auth',
+          authorizations={
+              'Bearer Auth': {
+                  'type': 'apiKey',
+                  'in': 'header',
+                  'name': 'Authorization',
+                  'description': 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+              }
+          })
 
 # API Models
+order_item_model = api.model('OrderItem', {
+    'menu_item_id': fields.Integer(required=True, description='ID of the menu item'),
+    'quantity': fields.Integer(required=True, description='Quantity of the menu item'),
+    'price_at_time': fields.Float(required=True, description='Price of the item at the time of order')
+})
+
+order_model = api.model('Order', {
+    'id': fields.Integer(readOnly=True, description='The unique identifier of an order'),
+    'user_id': fields.Integer(required=True, description='The ID of the user who placed the order'),
+    'restaurant_id': fields.Integer(required=True, description='The ID of the restaurant for the order'),
+    'total_price': fields.Float(required=True, description='The total price of the order'),
+    'status': fields.String(required=True, description='The current status of the order (e.g., PENDING, PAID, FAILED, CANCELLED)'),
+    'created_at': fields.DateTime(readOnly=True, description='The timestamp when the order was created'),
+    'updated_at': fields.DateTime(readOnly=True, description='The timestamp when the order was last updated'),
+    'items': fields.List(fields.Nested(order_item_model), description='List of items in the order')
+})
+
 order_item_input_model = api.model('OrderItemInput', {
     'menu_item_id': fields.Integer(required=True),
     'quantity': fields.Integer(required=True)
@@ -32,16 +58,20 @@ orders_ns = api.namespace('orders', description='Order operations')
 
 @orders_ns.route('/')
 class OrderList(Resource):
+    @orders_ns.doc('list_orders', security='Bearer Auth')
+    @orders_ns.marshal_list_with(order_model)
     def get(self):
-        """List all orders (sederhana)"""
+        """List all orders"""
         orders = Order.query.all()
-        return jsonify([o.to_dict() for o in orders])
+        return [o.to_dict() for o in orders]
 
+    @orders_ns.doc('create_order', security='Bearer Auth')
     @orders_ns.expect(order_input_model)
+    @orders_ns.marshal_with(order_model, code=201)
     def post(self):
         """
         Create a new order.
-        Ini adalah CONSUMER endpoint utama[cite: 83].
+        Ini adalah CONSUMER endpoint utama.
         Mengonsumsi User, Restaurant, dan Payment service.
         """
         data = request.get_json()
@@ -124,6 +154,55 @@ class OrderList(Resource):
         except requests.exceptions.RequestException as e:
             # Gagal konek ke service lain
             return jsonify({'error': f'Service communication error: {str(e)}'}), 500
+
+@orders_ns.route('/<int:id>')
+@orders_ns.response(404, 'Order not found')
+@orders_ns.param('id', 'The order identifier')
+class OrderResource(Resource):
+    @orders_ns.doc('get_order', security='Bearer Auth')
+    @orders_ns.marshal_with(order_model)
+    def get(self, id):
+        """Get order by ID"""
+        order = Order.query.get(id)
+        if not order:
+            return {'error': 'Order not found'}, 404
+        return order.to_dict()
+
+    @orders_ns.doc('update_order_status', security='Bearer Auth')
+    @orders_ns.expect(api.model('OrderStatusUpdate', {'status': fields.String(required=True, enum=['PENDING', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDED'])}))
+    @orders_ns.marshal_with(order_model)
+    def put(self, id):
+        """Update order status by ID"""
+        order = Order.query.get(id)
+        if not order:
+            return {'error': 'Order not found'}, 404
+
+        data = request.get_json()
+        new_status = data.get('status')
+        if new_status not in ['PENDING', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDED']:
+            return {'error': 'Invalid status. Allowed: PENDING, PAID, FAILED, CANCELLED, REFUNDED'}, 400
+        
+        order.status = new_status
+        db.session.commit()
+        return order.to_dict()
+
+    @orders_ns.doc('delete_order', security='Bearer Auth')
+    @orders_ns.response(200, 'Order deleted successfully')
+    def delete(self, id):
+        """Delete order by ID"""
+        order = Order.query.get(id)
+        if not order:
+            return {'error': 'Order not found'}, 404
+        
+        # Prevent deletion of paid orders as per Postman description
+        if order.status == 'PAID':
+            return {'error': 'Cannot delete a paid order. Please set status to CANCELLED or REFUNDED instead.'}, 400
+
+        # Delete associated order items first
+        OrderItem.query.filter_by(order_id=id).delete()
+        db.session.delete(order)
+        db.session.commit()
+        return {'message': 'Order deleted successfully'}, 200
 
 @app.route('/health')
 def health_check():

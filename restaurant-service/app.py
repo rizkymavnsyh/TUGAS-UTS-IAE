@@ -30,7 +30,16 @@ CORS(app)
 
 api = Api(app, doc='/api-docs/', version='1.0',
           title='Restaurant Service API',
-          description='API for managing restaurants and menus')
+          description='API for managing restaurants and menus',
+          security='Bearer Auth',
+          authorizations={
+              'Bearer Auth': {
+                  'type': 'apiKey',
+                  'in': 'header',
+                  'name': 'Authorization',
+                  'description': 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+              }
+          })
 
 # API Models (TETAP SAMA)
 restaurant_model = api.model('Restaurant', {
@@ -55,11 +64,13 @@ restaurants_ns = api.namespace('restaurants', description='Restaurant operations
 
 @restaurants_ns.route('/')
 class RestaurantList(Resource):
+    @restaurants_ns.doc('list_restaurants', security='Bearer Auth')
     @restaurants_ns.marshal_list_with(restaurant_model)
     def get(self):
         """List all restaurants"""
         return [r.to_dict() for r in Restaurant.query.all()]
 
+    @restaurants_ns.doc('create_restaurant', security='Bearer Auth')
     @restaurants_ns.expect(restaurant_model)
     @restaurants_ns.marshal_with(restaurant_model, code=201)
     def post(self):
@@ -74,6 +85,7 @@ class RestaurantList(Resource):
 @restaurants_ns.response(404, 'Restaurant not found')
 @restaurants_ns.param('id', 'The restaurant identifier')
 class RestaurantResource(Resource):
+    @restaurants_ns.doc('get_restaurant', security='Bearer Auth')
     @restaurants_ns.marshal_with(restaurant_model)
     def get(self, id):
         """Get restaurant by ID"""
@@ -82,6 +94,7 @@ class RestaurantResource(Resource):
             return {'error': 'Restaurant not found'}, 404
         return restaurant.to_dict()
 
+    @restaurants_ns.doc('update_restaurant', security='Bearer Auth')
     @restaurants_ns.expect(restaurant_model)
     @restaurants_ns.marshal_with(restaurant_model)
     def put(self, id):
@@ -99,7 +112,8 @@ class RestaurantResource(Resource):
         db.session.commit()
         return restaurant.to_dict()
 
-    @restaurants_ns.response(204, 'Restaurant deleted')
+    @restaurants_ns.doc('delete_restaurant', security='Bearer Auth')
+    @restaurants_ns.response(200, 'Restaurant deleted successfully')
     def delete(self, id):
         """Delete restaurant by ID"""
         restaurant = Restaurant.query.get(id)
@@ -110,17 +124,19 @@ class RestaurantResource(Resource):
         MenuItem.query.filter_by(restaurant_id=id).delete()
         db.session.delete(restaurant)
         db.session.commit()
-        return '', 204
+        return {'message': 'Restaurant deleted successfully'}, 200
 
 @restaurants_ns.route('/<int:id>/menu')
 @restaurants_ns.param('id', 'The restaurant identifier')
 class RestaurantMenu(Resource):
+    @restaurants_ns.doc('list_menu_items', security='Bearer Auth')
     @restaurants_ns.marshal_list_with(menu_item_model)
     def get(self, id):
         """Get all menu items for a restaurant"""
         items = MenuItem.query.filter_by(restaurant_id=id).all()
         return [item.to_dict() for item in items]
 
+    @restaurants_ns.doc('create_menu_item', security='Bearer Auth')
     @restaurants_ns.expect(menu_item_input_model)
     @restaurants_ns.marshal_with(menu_item_model, code=201)
     def post(self, id):
@@ -141,6 +157,7 @@ class RestaurantMenu(Resource):
 @restaurants_ns.param('menu_id', 'The menu item identifier')
 @restaurants_ns.response(404, 'Menu item not found')
 class MenuItemResource(Resource):
+    @restaurants_ns.doc('get_menu_item', security='Bearer Auth')
     @restaurants_ns.marshal_with(menu_item_model)
     def get(self, restaurant_id, menu_id):
         """Get specific menu item"""
@@ -149,6 +166,7 @@ class MenuItemResource(Resource):
             return {'error': 'Menu item not found'}, 404
         return item.to_dict()
 
+    @restaurants_ns.doc('update_menu_item', security='Bearer Auth')
     @restaurants_ns.expect(menu_item_input_model)
     @restaurants_ns.marshal_with(menu_item_model)
     def put(self, restaurant_id, menu_id):
@@ -168,7 +186,8 @@ class MenuItemResource(Resource):
         db.session.commit()
         return item.to_dict()
 
-    @restaurants_ns.response(204, 'Menu item deleted')
+    @restaurants_ns.doc('delete_menu_item', security='Bearer Auth')
+    @restaurants_ns.response(200, 'Menu item deleted successfully')
     def delete(self, restaurant_id, menu_id):
         """Delete menu item"""
         item = MenuItem.query.filter_by(id=menu_id, restaurant_id=restaurant_id).first()
@@ -177,7 +196,7 @@ class MenuItemResource(Resource):
 
         db.session.delete(item)
         db.session.commit()
-        return '', 204
+        return {'message': 'Menu item deleted successfully'}, 200
 
 # --- Internal Endpoint for OrderService (TETAP SAMA) ---
 @app.route('/internal/menu-items/<int:item_id>')

@@ -4,7 +4,7 @@ from flask_restx import Api, Resource, fields
 from models import db, Transaction
 from config import Config
 import os
-import requests # Untuk memanggil service lain [cite: 915]
+import requests # Untuk memanggil service lain
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -14,7 +14,16 @@ CORS(app)
 
 api = Api(app, doc='/api-docs/', version='1.0',
           title='Payment Service API',
-          description='API for processing payments')
+          description='API for processing payments',
+          security='Bearer Auth',
+          authorizations={
+              'Bearer Auth': {
+                  'type': 'apiKey',
+                  'in': 'header',
+                  'name': 'Authorization',
+                  'description': 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+              }
+          })
 
 # API Models
 transaction_model = api.model('Transaction', {
@@ -40,6 +49,7 @@ transaction_update_model = api.model('TransactionUpdate', {
 
 @payments_ns.route('/')
 class TransactionList(Resource):
+    @payments_ns.doc('list_transactions', security='Bearer Auth')
     @payments_ns.marshal_list_with(transaction_model)
     def get(self):
         """List all transactions"""
@@ -49,6 +59,7 @@ class TransactionList(Resource):
 @payments_ns.response(404, 'Transaction not found')
 @payments_ns.param('id', 'The transaction identifier')
 class TransactionResource(Resource):
+    @payments_ns.doc('get_transaction', security='Bearer Auth')
     @payments_ns.marshal_with(transaction_model)
     def get(self, id):
         """Get transaction by ID"""
@@ -57,7 +68,7 @@ class TransactionResource(Resource):
             return {'error': 'Transaction not found'}, 404
         return transaction.to_dict()
 
-    @payments_ns.doc('update_transaction')
+    @payments_ns.doc('update_transaction', security='Bearer Auth')
     @payments_ns.expect(transaction_update_model)
     @payments_ns.marshal_with(transaction_model)
     def put(self, id):
@@ -85,8 +96,8 @@ class TransactionResource(Resource):
         db.session.commit()
         return transaction.to_dict()
 
-    @payments_ns.doc('delete_transaction')
-    @payments_ns.response(204, 'Transaction deleted')
+    @payments_ns.doc('delete_transaction', security='Bearer Auth')
+    @payments_ns.response(200, 'Transaction deleted successfully')
     def delete(self, id):
         """
         Delete transaction (DEMO/TESTING ONLY)
@@ -101,14 +112,14 @@ class TransactionResource(Resource):
 
         db.session.delete(transaction)
         db.session.commit()
-        return '', 204
+        return {'message': 'Transaction deleted successfully'}, 200
 
 # --- Internal Endpoint for OrderService ---
 @app.route('/internal/process', methods=['POST'])
 def process_payment():
     """
     Internal endpoint to process a payment.
-    This is a CONSUMER endpoint[cite: 83]. It calls the User Service.
+    This is a CONSUMER endpoint. It calls the User Service.
     """
     data = request.get_json()
     user_id = data.get('user_id')
@@ -137,9 +148,8 @@ def process_payment():
             new_transaction.status = 'SUCCESS'
             db.session.commit()
             return jsonify(new_transaction.to_dict()), 200
-        else:
-            # 4. Jika gagal (misal: saldo tidak cukup [cite: 1062])
-            error_msg = response.json().get('error', 'Payment failed')
+                    else:
+                        # 4. Jika gagal (misal: saldo tidak cukup)            error_msg = response.json().get('error', 'Payment failed')
             new_transaction.status = 'FAILED'
             db.session.commit()
             return jsonify({'error': error_msg}), 400
