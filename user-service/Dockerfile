@@ -1,20 +1,15 @@
-# Use an official Python runtime as a parent image
 FROM python:3.9-slim
-
-# Set the working directory in the container
 WORKDIR /app
-
-# Copy the requirements file
 COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install build dependencies untuk bcrypt, lalu hapus setelah install
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && pip install --no-cache-dir -r requirements.txt \
+    && apt-get purge -y --auto-remove build-essential \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the rest of the application code
 COPY . .
-
-# Make port 3001 available
 EXPOSE 3001
-
-# Command to run the app
-CMD ["python", "app.py"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "--bind", "0.0.0.0:3001", "--log-level", "debug", "app:app"]

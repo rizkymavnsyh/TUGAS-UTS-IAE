@@ -45,6 +45,7 @@
         /* Main Content Layout */
         .container {
             display: flex;
+            flex-wrap: wrap;
             max-width: 1200px;
             margin: 20px auto;
             gap: 20px;
@@ -81,15 +82,36 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
         .main-panel h2 {
             color: #3f51b5;
+            margin: 0;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 1px solid #ddd;
             padding-bottom: 10px;
-            margin-bottom: 20px;
+        }
+        .panel-subtitle {
+            margin: 4px 0 0;
+            color: #666;
+            font-size: 0.95rem;
+        }
+        .panel-meta {
+            color: #555;
+            font-size: 0.85rem;
         }
         
         /* Grup Tombol */
+        .action-group {
+            display: flex;
+            flex-wrap: wrap;
+        }
         .action-group button {
             background-color: #4CAF50;
             color: white;
@@ -107,7 +129,7 @@
         }
 
         /* Kotak Hasil */
-        #result {
+        #rawResponse {
             background: #272822; /* Warna latar belakang kode gelap */
             color: #f8f8f2;
             padding: 15px;
@@ -118,12 +140,150 @@
             min-height: 200px;
             margin-top: 15px;
         }
+
+        /* Metrics & Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .metric-card {
+            background: #fff7f0;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #ffe0cc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .metric-card:nth-child(2) { background: #f0f9ff; border-color: #c8e7ff; }
+        .metric-card:nth-child(3) { background: #f3fdf4; border-color: #ccefd2; }
+        .metric-card:nth-child(4) { background: #f8f4ff; border-color: #e3d6ff; }
+        .metric-card h3 {
+            margin: 5px 0 0;
+            font-size: 1.8rem;
+        }
+        .metric-card small {
+            color: #666;
+        }
+
+        .health-card, .activity-card, .raw-response {
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        .health-header, .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .mini-btn {
+            background: #eceff1;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.3s;
+        }
+        .mini-btn:hover {
+            background: #dfe3e6;
+        }
+        .health-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .health-pill.healthy {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .health-pill.down {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .health-services {
+            list-style: none;
+            padding-left: 0;
+            margin: 10px 0 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .health-services li {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.85rem;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+        .data-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #ffffff;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 250px;
+        }
+        .table-container {
+            overflow-x: auto;
+            flex-grow: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f7f7f7;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .placeholder {
+            color: #777;
+            font-style: italic;
+        }
+
+        .timeline-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .timeline-item {
+            border-left: 3px solid #ff5722;
+            margin-left: 10px;
+            padding-left: 10px;
+            margin-bottom: 12px;
+        }
+        .timeline-item span {
+            display: block;
+            font-size: 0.8rem;
+            color: #555;
+        }
+        .raw-response pre {
+            margin: 0;
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>🍽️ Food Delivery Dashboard</h1>
+                <h1>Nusantara Food Delivery Dashboard</h1>
         <button id="logoutBtn">Logout</button>
     </div>
     
@@ -134,21 +294,121 @@
                 <p><strong>ID:</strong> <span id="userId">N/A</span></p>
                 <p><strong>Username:</strong> <span id="userUsername">N/A</span></p>
                 <p><strong>Role:</strong> <span id="userRole">N/A</span></p>
-                <p><strong>Service Status:</strong> <span style="color: green;">Online</span></p>
+                <p><strong>Service Status:</strong> <span id="sidebarHealth" class="health-pill">Unknown</span></p>
             </div>
         </div>
 
         <div class="main-panel">
-            <h2>API Actions via Gateway</h2>
+            <div class="panel-header">
+                <div>
+                    <h2>API Actions via Gateway</h2>
+                    <p class="panel-subtitle">Seluruh permintaan dikirim melalui API Gateway tunggal menuju microservice terkait.</p>
+                </div>
+                <div class="panel-meta">
+                    <span id="lastUpdated" class="mini-btn">Belum ada data</span>
+                </div>
+            </div>
+
+            <section class="stats-grid">
+                <div class="metric-card">
+                    <p>Total Users</p>
+                    <h3 id="metricUsers">0</h3>
+                    <small id="metricUsersMeta">Menunggu data</small>
+                </div>
+                <div class="metric-card">
+                    <p>Restaurants</p>
+                    <h3 id="metricRestaurants">0</h3>
+                    <small id="metricRestaurantsMeta">Menunggu data</small>
+                </div>
+                <div class="metric-card">
+                    <p>Orders</p>
+                    <h3 id="metricOrders">0</h3>
+                    <small id="metricOrdersMeta">Menunggu data</small>
+                </div>
+                <div class="metric-card">
+                    <p>Payments (GMV)</p>
+                    <h3 id="metricPayments">0</h3>
+                    <small id="metricPaymentsMeta">Menunggu data</small>
+                </div>
+            </section>
+
+            <div class="health-card">
+                <div class="health-header">
+                    <h3>Gateway & Service Health</h3>
+                    <button id="refreshHealthBtn" class="mini-btn">Refresh Health</button>
+                </div>
+                <div>
+                    <span class="health-pill" id="healthStatus">Unknown</span>
+                    <ul id="healthServices" class="health-services">
+                        <li>Belum dicek</li>
+                    </ul>
+                </div>
+            </div>
             
             <div class="action-group">
                 <button id="fetchUsersBtn" style="background-color: #3f51b5;">1. Fetch All Users</button>
                 <button id="fetchRestaurantsBtn" style="background-color: #009688;">2. Fetch Restaurants</button>
                 <button id="fetchOrdersBtn" style="background-color: #FF9800;">3. Fetch Orders</button>
+                <button id="fetchPaymentsBtn" style="background-color: #9C27B0;">4. Fetch Payments</button>
             </div>
 
-            <h3>API Response (JSON)</h3>
-            <pre id="result">Click a button to fetch data from the Microservices via API Gateway...</pre>
+            <div class="data-grid">
+                <section class="data-card" id="usersSection">
+                    <div class="card-header">
+                        <h3>Users</h3>
+                        <button class="mini-btn section-refresh" data-service="users">Reload</button>
+                    </div>
+                    <div class="table-container" id="usersTableContainer">
+                        <p class="placeholder">Klik tombol fetch untuk memuat data pengguna.</p>
+                    </div>
+                </section>
+
+                <section class="data-card" id="restaurantsSection">
+                    <div class="card-header">
+                        <h3>Restaurants</h3>
+                        <button class="mini-btn section-refresh" data-service="restaurants">Reload</button>
+                    </div>
+                    <div class="table-container" id="restaurantsTableContainer">
+                        <p class="placeholder">Menunggu data restoran.</p>
+                    </div>
+                </section>
+
+                <section class="data-card" id="ordersSection">
+                    <div class="card-header">
+                        <h3>Orders</h3>
+                        <button class="mini-btn section-refresh" data-service="orders">Reload</button>
+                    </div>
+                    <div class="table-container" id="ordersTableContainer">
+                        <p class="placeholder">Menunggu data order.</p>
+                    </div>
+                </section>
+
+                <section class="data-card" id="paymentsSection">
+                    <div class="card-header">
+                        <h3>Payments</h3>
+                        <button class="mini-btn section-refresh" data-service="payments">Reload</button>
+                    </div>
+                    <div class="table-container" id="paymentsTableContainer">
+                        <p class="placeholder">Menunggu data pembayaran.</p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="activity-card">
+                <div class="card-header">
+                    <h3>Recent Cross-Service Activity</h3>
+                </div>
+                <ul id="activityTimeline" class="timeline-list">
+                    <li class="placeholder">Timeline akan tampil setelah Orders atau Payments berhasil diambil.</li>
+                </ul>
+            </section>
+
+            <section class="raw-response">
+                <div class="card-header">
+                    <h3>Last API Response (JSON)</h3>
+                </div>
+                <pre id="rawResponse">Click a button to fetch data from the Microservices via API Gateway...</pre>
+            </section>
         </div>
     </div>
 
@@ -156,3 +416,4 @@
     <script src="js/app.js"></script>
 </body>
 </html>
+

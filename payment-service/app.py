@@ -33,12 +33,75 @@ payment_input_model = api.model('PaymentInput', {
 
 payments_ns = api.namespace('payments', description='Payment operations')
 
+# Update model untuk PUT (hanya status yang bisa diubah)
+transaction_update_model = api.model('TransactionUpdate', {
+    'status': fields.String(description='Transaction status (SUCCESS/FAILED/PENDING)')
+})
+
 @payments_ns.route('/')
 class TransactionList(Resource):
     @payments_ns.marshal_list_with(transaction_model)
     def get(self):
         """List all transactions"""
         return [t.to_dict() for t in Transaction.query.all()]
+
+@payments_ns.route('/<int:id>')
+@payments_ns.response(404, 'Transaction not found')
+@payments_ns.param('id', 'The transaction identifier')
+class TransactionResource(Resource):
+    @payments_ns.marshal_with(transaction_model)
+    def get(self, id):
+        """Get transaction by ID"""
+        transaction = Transaction.query.get(id)
+        if not transaction:
+            return {'error': 'Transaction not found'}, 404
+        return transaction.to_dict()
+
+    @payments_ns.doc('update_transaction')
+    @payments_ns.expect(transaction_update_model)
+    @payments_ns.marshal_with(transaction_model)
+    def put(self, id):
+        """
+        Update transaction status (DEMO/TESTING ONLY)
+
+        WARNING: In production, financial transactions should be IMMUTABLE.
+        This endpoint is provided for testing/demo purposes only.
+        Real-world: Use reversal/refund transactions instead of editing.
+        """
+        transaction = Transaction.query.get(id)
+        if not transaction:
+            return {'error': 'Transaction not found'}, 404
+
+        data = request.get_json()
+
+        # ONLY allow status update, NOT amount/user_id/order_id
+        if 'status' in data:
+            allowed_statuses = ['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED']
+            if data['status'] in allowed_statuses:
+                transaction.status = data['status']
+            else:
+                return {'error': f'Invalid status. Allowed: {allowed_statuses}'}, 400
+
+        db.session.commit()
+        return transaction.to_dict()
+
+    @payments_ns.doc('delete_transaction')
+    @payments_ns.response(204, 'Transaction deleted')
+    def delete(self, id):
+        """
+        Delete transaction (DEMO/TESTING ONLY)
+
+        WARNING: In production, financial transactions should NEVER be deleted.
+        This endpoint is provided for testing/demo purposes only.
+        Real-world: Transactions must be kept for audit trail and compliance.
+        """
+        transaction = Transaction.query.get(id)
+        if not transaction:
+            return {'error': 'Transaction not found'}, 404
+
+        db.session.delete(transaction)
+        db.session.commit()
+        return '', 204
 
 # --- Internal Endpoint for OrderService ---
 @app.route('/internal/process', methods=['POST'])

@@ -5,6 +5,7 @@ from models import db, Restaurant, MenuItem
 from config import Config
 import os
 import time # Import modul time
+import requests # Tambahkan import requests
 
 # Fungsi untuk menunggu database siap (Sama seperti di user-service)
 def wait_for_db(app, max_retries=10, delay=2):
@@ -58,7 +59,7 @@ class RestaurantList(Resource):
     def get(self):
         """List all restaurants"""
         return [r.to_dict() for r in Restaurant.query.all()]
-    
+
     @restaurants_ns.expect(restaurant_model)
     @restaurants_ns.marshal_with(restaurant_model, code=201)
     def post(self):
@@ -68,6 +69,48 @@ class RestaurantList(Resource):
         db.session.add(r)
         db.session.commit()
         return r.to_dict(), 201
+
+@restaurants_ns.route('/<int:id>')
+@restaurants_ns.response(404, 'Restaurant not found')
+@restaurants_ns.param('id', 'The restaurant identifier')
+class RestaurantResource(Resource):
+    @restaurants_ns.marshal_with(restaurant_model)
+    def get(self, id):
+        """Get restaurant by ID"""
+        restaurant = Restaurant.query.get(id)
+        if not restaurant:
+            return {'error': 'Restaurant not found'}, 404
+        return restaurant.to_dict()
+
+    @restaurants_ns.expect(restaurant_model)
+    @restaurants_ns.marshal_with(restaurant_model)
+    def put(self, id):
+        """Update restaurant by ID"""
+        restaurant = Restaurant.query.get(id)
+        if not restaurant:
+            return {'error': 'Restaurant not found'}, 404
+
+        data = request.get_json()
+        if 'name' in data:
+            restaurant.name = data['name']
+        if 'address' in data:
+            restaurant.address = data['address']
+
+        db.session.commit()
+        return restaurant.to_dict()
+
+    @restaurants_ns.response(204, 'Restaurant deleted')
+    def delete(self, id):
+        """Delete restaurant by ID"""
+        restaurant = Restaurant.query.get(id)
+        if not restaurant:
+            return {'error': 'Restaurant not found'}, 404
+
+        # Also delete all menu items for this restaurant
+        MenuItem.query.filter_by(restaurant_id=id).delete()
+        db.session.delete(restaurant)
+        db.session.commit()
+        return '', 204
 
 @restaurants_ns.route('/<int:id>/menu')
 @restaurants_ns.param('id', 'The restaurant identifier')
@@ -93,6 +136,49 @@ class RestaurantMenu(Resource):
         db.session.commit()
         return item.to_dict(), 201
 
+@restaurants_ns.route('/<int:restaurant_id>/menu/<int:menu_id>')
+@restaurants_ns.param('restaurant_id', 'The restaurant identifier')
+@restaurants_ns.param('menu_id', 'The menu item identifier')
+@restaurants_ns.response(404, 'Menu item not found')
+class MenuItemResource(Resource):
+    @restaurants_ns.marshal_with(menu_item_model)
+    def get(self, restaurant_id, menu_id):
+        """Get specific menu item"""
+        item = MenuItem.query.filter_by(id=menu_id, restaurant_id=restaurant_id).first()
+        if not item:
+            return {'error': 'Menu item not found'}, 404
+        return item.to_dict()
+
+    @restaurants_ns.expect(menu_item_input_model)
+    @restaurants_ns.marshal_with(menu_item_model)
+    def put(self, restaurant_id, menu_id):
+        """Update menu item"""
+        item = MenuItem.query.filter_by(id=menu_id, restaurant_id=restaurant_id).first()
+        if not item:
+            return {'error': 'Menu item not found'}, 404
+
+        data = request.get_json()
+        if 'name' in data:
+            item.name = data['name']
+        if 'description' in data:
+            item.description = data['description']
+        if 'price' in data:
+            item.price = data['price']
+
+        db.session.commit()
+        return item.to_dict()
+
+    @restaurants_ns.response(204, 'Menu item deleted')
+    def delete(self, restaurant_id, menu_id):
+        """Delete menu item"""
+        item = MenuItem.query.filter_by(id=menu_id, restaurant_id=restaurant_id).first()
+        if not item:
+            return {'error': 'Menu item not found'}, 404
+
+        db.session.delete(item)
+        db.session.commit()
+        return '', 204
+
 # --- Internal Endpoint for OrderService (TETAP SAMA) ---
 @app.route('/internal/menu-items/<int:item_id>')
 def get_menu_item_internal(item_id):
@@ -116,6 +202,22 @@ if __name__ == '__main__':
         # --- LOGIKA INISIALISASI DATA SAMPLE KRITIS ---
         if not Restaurant.query.first():
             print("No restaurants found, creating sample data...")
+            
+            # --- START LOGIKA CONSUMER: Memanggil User Service untuk memverifikasi admin user (ID 1) ---
+            try:
+                # User Service memiliki internal endpoint untuk mendapatkan user berdasarkan ID
+                user_url = f"{Config.USER_SERVICE_URL}/internal/users/1"
+                user_res = requests.get(user_url)
+                
+                if user_res.status_code == 200:
+                    admin_name = user_res.json().get('username')
+                    print(f"[CONSUMER-RESTAURANT] Verified Admin User exists: {admin_name}")
+                else:
+                    print(f"[CONSUMER-RESTAURANT] Warning: Admin User (ID 1) not found in User Service (Code: {user_res.status_code}).")
+            except requests.exceptions.RequestException as e:
+                # Ini hanya log, tidak mengganggu inisialisasi (non-critical path)
+                print(f"[CONSUMER-RESTAURANT] Warning: Failed to connect to User Service: {str(e)}")
+            # --- END LOGIKA CONSUMER ---
             
             # 1. Buat Restaurant (ID: 1)
             r1 = Restaurant(name='Pizza Zone', address='123 Main St')

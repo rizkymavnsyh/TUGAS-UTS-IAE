@@ -11,3 +11,7 @@ class Config:
     SERVICE_NAME = os.getenv('SERVICE_NAME', 'user-service')
     # Penambahan yang diperlukan agar Flask dapat menemukan JWT_SECRET
     JWT_SECRET = os.getenv('JWT_SECRET', 'your-very-secret-jwt-key-change-in-production')
+    # --- BARU: URL Order Service untuk CONSUMER check ---
+    ORDER_SERVICE_URL = os.getenv('ORDER_SERVICE_URL', 'http://order-service:3003')
+    # --- BCRYPT Configuration: Set to 10 untuk balance security & speed ---
+    BCRYPT_LOG_ROUNDS = 10
