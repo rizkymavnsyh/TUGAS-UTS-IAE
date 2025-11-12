@@ -1,9 +1,7 @@
-# File baru: restaurant-service/gunicorn.conf.py
 import time
 from app import app, db, wait_for_db
 from models import Restaurant, MenuItem
 
-# Worker configuration
 workers = 2
 worker_class = 'sync'
 worker_connections = 1000
@@ -11,7 +9,6 @@ timeout = 120
 keepalive = 5
 graceful_timeout = 30
 
-# Logging
 accesslog = '-'
 errorlog = '-'
 loglevel = 'debug'

@@ -25,7 +25,6 @@ api = Api(app, doc='/api-docs/', version='1.0',
               }
           })
 
-# API Models
 order_item_model = api.model('OrderItem', {
     'menu_item_id': fields.Integer(required=True, description='ID of the menu item'),
     'quantity': fields.Integer(required=True, description='Quantity of the menu item'),
@@ -52,7 +51,6 @@ order_input_model = api.model('OrderInput', {
     'restaurant_id': fields.Integer(required=True),
     'items': fields.List(fields.Nested(order_item_input_model), required=True)
 })
-# (Model output bisa ditambahkan agar lebih lengkap)
 
 orders_ns = api.namespace('orders', description='Order operations')
 
@@ -80,13 +78,11 @@ class OrderList(Resource):
         item_inputs = data.get('items')
         
         try:
-            # 1. Verifikasi User
             user_url = f"{Config.USER_SERVICE_URL}/internal/users/{user_id}"
             user_res = requests.get(user_url)
             if user_res.status_code != 200:
                 return {'error': 'User not found'}, 404
 
-            # 2. Verifikasi Menu Item & Hitung Total Harga
             total_price = 0
             order_items_data = []
             
@@ -109,7 +105,6 @@ class OrderList(Resource):
                     'price_at_time': price
                 })
 
-            # 3. Buat Order PENDING
             new_order = Order(
                 user_id=user_id,
                 restaurant_id=restaurant_id,
@@ -117,9 +112,8 @@ class OrderList(Resource):
                 status='PENDING'
             )
             db.session.add(new_order)
-            db.session.commit() # Commit untuk dapat order ID
+            db.session.commit()
 
-            # 4. Buat OrderItems
             for item_data in order_items_data:
                 order_item = OrderItem(
                     order_id=new_order.id,
@@ -131,7 +125,6 @@ class OrderList(Resource):
             
             db.session.commit()
 
-            # 5. Proses Pembayaran (Panggil Payment Service)
             payment_url = f"{Config.PAYMENT_SERVICE_URL}/internal/process"
             payment_payload = {
                 'user_id': user_id,
@@ -141,18 +134,15 @@ class OrderList(Resource):
             payment_res = requests.post(payment_url, json=payment_payload)
 
             if payment_res.status_code == 200:
-                # 6. Sukses
                 new_order.status = 'PAID'
                 db.session.commit()
                 return new_order.to_dict(), 201
             else:
-                # 7. Gagal (misal: saldo kurang)
                 new_order.status = 'FAILED'
                 db.session.commit()
                 return {'error': payment_res.json().get('error', 'Payment failed')}, 400
 
         except requests.exceptions.RequestException as e:
-            # Gagal konek ke service lain
             return jsonify({'error': f'Service communication error: {str(e)}'}), 500
 
 @orders_ns.route('/<int:id>')
@@ -194,11 +184,9 @@ class OrderResource(Resource):
         if not order:
             return {'error': 'Order not found'}, 404
         
-        # Prevent deletion of paid orders as per Postman description
         if order.status == 'PAID':
             return {'error': 'Cannot delete a paid order. Please set status to CANCELLED or REFUNDED instead.'}, 400
 
-        # Delete associated order items first
         OrderItem.query.filter_by(order_id=id).delete()
         db.session.delete(order)
         db.session.commit()

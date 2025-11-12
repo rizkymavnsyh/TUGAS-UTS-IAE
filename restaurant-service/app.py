@@ -4,15 +4,13 @@ from flask_restx import Api, Resource, fields
 from models import db, Restaurant, MenuItem
 from config import Config
 import os
-import time # Import modul time
-import requests # Tambahkan import requests
+import time
+import requests
 
-# Fungsi untuk menunggu database siap (Sama seperti di user-service)
 def wait_for_db(app, max_retries=10, delay=2):
     with app.app_context():
         for i in range(max_retries):
             try:
-                # Mencoba query sederhana
                 db.session.execute(db.text('SELECT 1')).scalar()
                 print("Restaurant DB connection successful!")
                 return
@@ -41,7 +39,6 @@ api = Api(app, doc='/api-docs/', version='1.0',
               }
           })
 
-# API Models (TETAP SAMA)
 restaurant_model = api.model('Restaurant', {
     'id': fields.Integer,
     'name': fields.String,
@@ -120,7 +117,6 @@ class RestaurantResource(Resource):
         if not restaurant:
             return {'error': 'Restaurant not found'}, 404
 
-        # Also delete all menu items for this restaurant
         MenuItem.query.filter_by(restaurant_id=id).delete()
         db.session.delete(restaurant)
         db.session.commit()
@@ -198,7 +194,6 @@ class MenuItemResource(Resource):
         db.session.commit()
         return {'message': 'Menu item deleted successfully'}, 200
 
-# --- Internal Endpoint for OrderService (TETAP SAMA) ---
 @app.route('/internal/menu-items/<int:item_id>')
 def get_menu_item_internal(item_id):
     """Internal endpoint to get menu item details"""
@@ -212,38 +207,30 @@ def health_check():
     return jsonify({'status': 'healthy', 'service': os.getenv('SERVICE_NAME')})
 
 if __name__ == '__main__':
-    # --- PANGGIL WAIT_FOR_DB DULU ---
     wait_for_db(app) 
     
     with app.app_context():
         db.create_all()
         
-        # --- LOGIKA INISIALISASI DATA SAMPLE KRITIS ---
         if not Restaurant.query.first():
             print("No restaurants found, creating sample data...")
             
-            # --- START LOGIKA CONSUMER: Memanggil User Service untuk memverifikasi admin user (ID 1) ---
             try:
-                # User Service memiliki internal endpoint untuk mendapatkan user berdasarkan ID
                 user_url = f"{Config.USER_SERVICE_URL}/internal/users/1"
                 user_res = requests.get(user_url)
                 
                 if user_res.status_code == 200:
                     admin_name = user_res.json().get('username')
-                    print(f"[CONSUMER-RESTAURANT] Verified Admin User exists: {admin_name}")
+                    print(f"Verified Admin User exists: {admin_name}")
                 else:
-                    print(f"[CONSUMER-RESTAURANT] Warning: Admin User (ID 1) not found in User Service (Code: {user_res.status_code}).")
+                    print(f"Warning: Admin User (ID 1) not found in User Service (Code: {user_res.status_code}).")
             except requests.exceptions.RequestException as e:
-                # Ini hanya log, tidak mengganggu inisialisasi (non-critical path)
-                print(f"[CONSUMER-RESTAURANT] Warning: Failed to connect to User Service: {str(e)}")
-            # --- END LOGIKA CONSUMER ---
+                print(f"Warning: Failed to connect to User Service: {str(e)}")
             
-            # 1. Buat Restaurant (ID: 1)
             r1 = Restaurant(name='Pizza Zone', address='123 Main St')
             db.session.add(r1)
             db.session.commit() 
 
-            # 2. Buat Menu Item (ID: 1)
             m1 = MenuItem(
                 restaurant_id=r1.id, 
                 name='Pepperoni Pizza', 
@@ -254,7 +241,6 @@ if __name__ == '__main__':
             db.session.commit()
 
             print(f"Sample restaurant created. Use menu_item_id: {m1.id} for testing.")
-        # --- END LOGIKA INISIALISASI ---
         
     port = Config.PORT
     app.run(host='0.0.0.0', port=port, debug=True)

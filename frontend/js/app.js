@@ -1,10 +1,20 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     const rawResponseBox = document.getElementById('rawResponse');
     const timelineList = document.getElementById('activityTimeline');
     const lastUpdatedEl = document.getElementById('lastUpdated');
     const healthStatusEl = document.getElementById('healthStatus');
     const healthServicesEl = document.getElementById('healthServices');
     const sidebarHealthEl = document.getElementById('sidebarHealth');
+
+    const crudModalElement = document.getElementById('crudModal');
+    const bootstrapModal = new bootstrap.Modal(crudModalElement);
+    const modalTitle = document.getElementById('modalTitle');
+    const crudForm = document.getElementById('crudForm');
+    const formFieldsContainer = document.getElementById('formFields');
+
+    let currentService = '';
+    let currentOperation = '';
+    let currentRecordId = null;
 
     const state = {
         users: [],
@@ -16,27 +26,87 @@
     const serviceMap = {
         users: {
             endpoint: '/api/user/users/',
+            createEndpoint: '/api/user/users/',
+            updateEndpoint: '/api/user/users/',
+            deleteEndpoint: '/api/user/users/',
             buttonId: 'fetchUsersBtn',
+            createButtonId: 'createUserBtn',
             tableContainer: 'usersTableContainer',
-            preferredColumns: ['id', 'username', 'email', 'role']
+            preferredColumns: ['id', 'username', 'name', 'role', 'balance'],
+            formFields: {
+                create: [
+                    { name: 'username', label: 'Username', type: 'text', required: true },
+                    { name: 'name', label: 'Name', type: 'text', required: false },
+                    { name: 'password', label: 'Password', type: 'password', required: true },
+                    { name: 'role', label: 'Role', type: 'select', options: ['user', 'admin'], required: true, defaultValue: 'user' }
+                ],
+                update: [
+                    { name: 'username', label: 'Username', type: 'text', required: true },
+                    { name: 'name', label: 'Name', type: 'text', required: false },
+                    { name: 'password', label: 'Password (leave blank to keep current)', type: 'password', required: false },
+                    { name: 'role', label: 'Role', type: 'select', options: ['user', 'admin'], required: true }
+                ]
+            }
         },
         restaurants: {
             endpoint: '/api/restaurant/restaurants/',
+            createEndpoint: '/api/restaurant/restaurants/',
+            updateEndpoint: '/api/restaurant/restaurants/',
+            deleteEndpoint: '/api/restaurant/restaurants/',
             buttonId: 'fetchRestaurantsBtn',
+            createButtonId: 'createRestaurantBtn',
             tableContainer: 'restaurantsTableContainer',
-            preferredColumns: ['id', 'name', 'city', 'status']
+            preferredColumns: ['id', 'name', 'address'],
+            formFields: {
+                create: [
+                    { name: 'name', label: 'Restaurant Name', type: 'text', required: true },
+                    { name: 'address', label: 'Address', type: 'text', required: true }
+                ],
+                update: [
+                    { name: 'name', label: 'Restaurant Name', type: 'text', required: true },
+                    { name: 'address', label: 'Address', type: 'text', required: true }
+                ]
+            }
         },
         orders: {
             endpoint: '/api/order/orders/',
+            createEndpoint: '/api/order/orders/',
+            updateEndpoint: '/api/order/orders/',
+            deleteEndpoint: '/api/order/orders/',
             buttonId: 'fetchOrdersBtn',
+            createButtonId: 'createOrderBtn',
             tableContainer: 'ordersTableContainer',
-            preferredColumns: ['id', 'user_id', 'restaurant_id', 'status']
+            preferredColumns: ['id', 'user_id', 'restaurant_id', 'total_price', 'status'],
+            formFields: {
+                create: [
+                    { name: 'user_id', label: 'User ID', type: 'number', required: true },
+                    { name: 'restaurant_id', label: 'Restaurant ID', type: 'number', required: true },
+                    { name: 'items', label: 'Items (JSON Array)', type: 'textarea', required: true, placeholder: '[{"menu_item_id": 1, "quantity": 1}]' }
+                ],
+                update: [
+                    { name: 'status', label: 'Status', type: 'select', options: ['PENDING', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDED'], required: true }
+                ]
+            }
         },
         payments: {
             endpoint: '/api/payment/payments/',
+            createEndpoint: '/api/payment/internal/process',
+            updateEndpoint: '/api/payment/payments/',
+            deleteEndpoint: '/api/payment/payments/',
             buttonId: 'fetchPaymentsBtn',
+            createButtonId: 'createPaymentBtn',
             tableContainer: 'paymentsTableContainer',
-            preferredColumns: ['id', 'order_id', 'status', 'amount']
+            preferredColumns: ['id', 'user_id', 'order_id', 'amount', 'status'],
+            formFields: {
+                create: [
+                    { name: 'user_id', label: 'User ID', type: 'number', required: true },
+                    { name: 'order_id', label: 'Order ID', type: 'number', required: true },
+                    { name: 'amount', label: 'Amount', type: 'number', required: true }
+                ],
+                update: [
+                    { name: 'status', label: 'Status', type: 'select', options: ['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED'], required: true }
+                ]
+            }
         }
     };
 
@@ -53,9 +123,13 @@
         }
 
         Object.entries(serviceMap).forEach(([key, config]) => {
-            const button = document.getElementById(config.buttonId);
-            if (button) {
-                button.addEventListener('click', () => handleServiceFetch(key));
+            const fetchButton = document.getElementById(config.buttonId);
+            if (fetchButton) {
+                fetchButton.addEventListener('click', () => handleServiceFetch(key));
+            }
+            const createButton = document.getElementById(config.createButtonId);
+            if (createButton) {
+                createButton.addEventListener('click', () => openCrudModal(key, 'create'));
             }
         });
 
@@ -72,6 +146,8 @@
         if (refreshHealthBtn) {
             refreshHealthBtn.addEventListener('click', checkGatewayHealth);
         }
+
+        crudForm.addEventListener('submit', handleSubmitCrudForm);
     }
 
     function initializeUserProfile() {
@@ -101,7 +177,7 @@
             const records = normalizeCollection(payload);
             state[serviceKey] = records;
 
-            renderTable(config.tableContainer, records, config.preferredColumns);
+            renderTable(config.tableContainer, records, config.preferredColumns, serviceKey);
             updateMetrics();
             updateTimeline();
             setLastUpdated();
@@ -136,33 +212,61 @@
         return [payload];
     }
 
-    function renderTable(containerId, records, preferredColumns = []) {
+    function renderTable(containerId, records, preferredColumns = [], serviceKey) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
         if (!records || records.length === 0) {
-            container.innerHTML = '<p class="placeholder">Belum ada data dari layanan ini.</p>';
+            container.innerHTML = '<p class="text-muted">Belum ada data dari layanan ini.</p>';
             return;
         }
 
         const columns = deriveColumns(records, preferredColumns);
-        const headerHtml = columns.map((col) => `<th>${formatHeader(col)}</th>`).join('');
+        let headerHtml = columns.map((col) => `<th>${formatHeader(col)}</th>`).join('');
+        headerHtml += '<th>Actions</th>';
+
         const rowsHtml = records.slice(0, 25).map((item) => {
             const cells = columns.map((col) => `<td>${formatCell(item[col])}</td>`).join('');
-            return `<tr>${cells}</tr>`;
+            const actions = `
+                <td>
+                    <button class="btn btn-sm btn-info edit-btn me-2" data-service="${serviceKey}" data-id="${item.id}"><i class="bi bi-pencil"></i> Edit</button>
+                    <button class="btn btn-sm btn-danger delete-btn" data-service="${serviceKey}" data-id="${item.id}"><i class="bi bi-trash"></i> Delete</button>
+                </td>
+            `;
+            return `<tr>${cells}${actions}</tr>`;
         }).join('');
 
         container.innerHTML = `
-            <table>
-                <thead>
-                    <tr>${headerHtml}</tr>
-                </thead>
-                <tbody>
-                    ${rowsHtml}
-                </tbody>
-            </table>
-            <p class="placeholder">Menampilkan ${Math.min(records.length, 25)} dari ${records.length} baris.</p>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>${headerHtml}</tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted">Menampilkan ${Math.min(records.length, 25)} dari ${records.length} baris.</p>
         `;
+
+        container.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const service = event.target.dataset.service;
+                const id = event.target.dataset.id;
+                const record = records.find(r => String(r.id) === String(id));
+                openCrudModal(service, 'update', record);
+            });
+        });
+        container.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const service = event.target.dataset.service;
+                const id = event.target.dataset.id;
+                if (confirm(`Are you sure you want to delete record ${id} from ${service}?`)) {
+                    handleDelete(service, id);
+                }
+            });
+        });
     }
 
     function deriveColumns(records, preferredColumns) {
@@ -215,14 +319,14 @@
     function setSectionLoading(containerId) {
         const container = document.getElementById(containerId);
         if (container) {
-            container.innerHTML = '<p class="placeholder">Loading data...</p>';
+            container.innerHTML = '<p class="text-muted">Loading data...</p>';
         }
     }
 
     function displaySectionError(containerId, message) {
         const container = document.getElementById(containerId);
         if (container) {
-            container.innerHTML = `<p class="placeholder">${message || 'Gagal memuat data.'}</p>`;
+            container.innerHTML = `<p class="text-danger">${message || 'Gagal memuat data.'}</p>`;
         }
     }
 
@@ -254,7 +358,7 @@
 
         const totalPayments = state.payments.reduce((sum, payment) => sum + detectAmount(payment), 0);
         const formattedTotal = formatCurrency(totalPayments);
-        updateMetricCard('metricPayments', 'metricPaymentsMeta', formattedTotal, state.payments.length ? `${state.payments.length} transaksi` : 'Belum ada pembayaran');
+        updateMetricCard('metricPayments', 'metricPaymentsMeta', state.payments.length ? `${state.payments.length} transaksi` : 'Belum ada pembayaran', formattedTotal);
     }
 
     function updateMetricCard(valueId, metaId, value, metaText) {
@@ -340,7 +444,7 @@
             .slice(0, 6);
 
         if (!recent.length) {
-            timelineList.innerHTML = '<li class="placeholder">Timeline akan tampil setelah data order atau payment tersedia.</li>';
+            timelineList.innerHTML = '<li class="text-muted">Timeline akan tampil setelah data order atau payment tersedia.</li>';
             return;
         }
 
@@ -388,7 +492,7 @@
         if (!healthStatusEl || !healthServicesEl) return;
 
         setHealthState('Checking...');
-        healthServicesEl.innerHTML = '<li>Memeriksa...</li>';
+        healthServicesEl.innerHTML = '<li class="list-inline-item">Memeriksa...</li>';
 
         try {
             const response = await fetch(`${API_GATEWAY_URL}/health`);
@@ -401,12 +505,12 @@
 
             const services = Array.isArray(data.services) ? data.services : [];
             healthServicesEl.innerHTML = services.length
-                ? services.map((service) => `<li>${service}</li>`).join('')
-                : '<li>Tidak ada daftar service.</li>';
+                ? services.map((service) => `<li class="list-inline-item">${service}</li>`).join('')
+                : '<li class="list-inline-item">Tidak ada daftar service.</li>';
         } catch (error) {
             console.error('Health check failed:', error);
             applyHealthState(false, 'Unavailable');
-            healthServicesEl.innerHTML = '<li>Gateway tidak dapat dihubungi</li>';
+            healthServicesEl.innerHTML = '<li class="list-inline-item">Gateway tidak dapat dihubungi</li>';
         }
     }
 
@@ -427,5 +531,153 @@
             sidebarHealthEl.classList.remove('healthy', 'down');
             sidebarHealthEl.classList.add(isHealthy ? 'healthy' : 'down');
         }
+    }
+
+    function openCrudModal(serviceKey, operation, data = null) {
+        currentService = serviceKey;
+        currentOperation = operation;
+        currentRecordId = data ? data.id : null;
+
+        modalTitle.textContent = `${operation === 'create' ? 'Create New' : 'Edit'} ${serviceKey.charAt(0).toUpperCase() + serviceKey.slice(1).replace(/s$/, '')}`;
+        generateFormFields(serviceKey, operation, data);
+        bootstrapModal.show();
+    }
+
+    function closeCrudModal() {
+        bootstrapModal.hide();
+        crudForm.reset();
+        formFieldsContainer.innerHTML = '';
+        currentService = '';
+        currentOperation = '';
+        currentRecordId = null;
+    }
+
+    function generateFormFields(serviceKey, operation, data = null) {
+        formFieldsContainer.innerHTML = '';
+        const fields = serviceMap[serviceKey].formFields[operation];
+
+        fields.forEach(field => {
+            const div = document.createElement('div');
+            div.className = 'mb-3';
+
+            const label = document.createElement('label');
+            label.htmlFor = field.name;
+            label.className = 'form-label';
+            label.textContent = field.label + (field.required ? ' *' : '');
+            div.appendChild(label);
+
+            let inputElement;
+            if (field.type === 'select') {
+                inputElement = document.createElement('select');
+                inputElement.className = 'form-select';
+                field.options.forEach(option => {
+                    const opt = document.createElement('option');
+                    opt.value = option;
+                    opt.textContent = option.charAt(0).toUpperCase() + option.slice(1);
+                    inputElement.appendChild(opt);
+                });
+            } else if (field.type === 'textarea') {
+                inputElement = document.createElement('textarea');
+                inputElement.className = 'form-control';
+                inputElement.rows = 4;
+            } else {
+                inputElement = document.createElement('input');
+                inputElement.type = field.type;
+                inputElement.className = 'form-control';
+            }
+            
+            inputElement.id = field.name;
+            inputElement.name = field.name;
+            inputElement.required = field.required;
+            if (field.placeholder) {
+                inputElement.placeholder = field.placeholder;
+            }
+
+            if (data && data[field.name] !== undefined) {
+                if (field.type === 'textarea' && typeof data[field.name] === 'object') {
+                    inputElement.value = JSON.stringify(data[field.name], null, 2);
+                } else {
+                    inputElement.value = data[field.name];
+                }
+            } else if (operation === 'create' && field.defaultValue !== undefined) {
+                inputElement.value = field.defaultValue;
+            }
+
+            div.appendChild(inputElement);
+            formFieldsContainer.appendChild(div);
+        });
+    }
+
+    async function handleSubmitCrudForm(event) {
+        event.preventDefault();
+        const formData = {};
+        const fields = serviceMap[currentService].formFields[currentOperation];
+
+        fields.forEach(field => {
+            const input = document.getElementById(field.name);
+            if (input) {
+                let value = input.value;
+                if (field.type === 'number') {
+                    value = parseFloat(value);
+                    if (isNaN(value)) value = null;
+                } else if (field.type === 'textarea' && field.name === 'items') {
+                    try {
+                        value = JSON.parse(value);
+                    } catch (e) {
+                        alert('Invalid JSON for items field.');
+                        return;
+                    }
+                }
+                if (value !== null && value !== '') {
+                    formData[field.name] = value;
+                }
+            }
+        });
+
+        let response;
+        if (currentOperation === 'create') {
+            response = await handleCreate(currentService, formData);
+        } else if (currentOperation === 'update') {
+            response = await handleUpdate(currentService, currentRecordId, formData);
+        }
+
+        if (response && response.success !== false) {
+            showNotification(`${currentService.charAt(0).toUpperCase() + currentService.slice(1)} ${currentOperation}d successfully!`);
+            closeCrudModal();
+            handleServiceFetch(currentService);
+        } else {
+            showNotification(`Error ${currentOperation}ing ${currentService}: ${response?.error || 'Unknown error'}`, 'error');
+            setRawResponse(response);
+        }
+    }
+
+    async function handleCreate(serviceKey, data) {
+        const config = serviceMap[serviceKey];
+        const endpoint = config.createEndpoint;
+        return await sendAuthenticatedRequest('POST', endpoint, data);
+    }
+
+    async function handleUpdate(serviceKey, id, data) {
+        const config = serviceMap[serviceKey];
+        const endpoint = `${config.updateEndpoint}${id}`;
+        return await sendAuthenticatedRequest('PUT', endpoint, data);
+    }
+
+    async function handleDelete(serviceKey, id) {
+        const config = serviceMap[serviceKey];
+        const endpoint = `${config.deleteEndpoint}${id}`;
+        const response = await sendAuthenticatedRequest('DELETE', endpoint);
+        if (response && response.success !== false) {
+            showNotification(`${serviceKey.charAt(0).toUpperCase() + serviceKey.slice(1)} deleted successfully!`);
+            handleServiceFetch(serviceKey);
+        } else {
+            showNotification(`Error deleting ${serviceKey}: ${response?.error || 'Unknown error'}`, 'error');
+            setRawResponse(response);
+        }
+    }
+
+    function showNotification(message, type = 'success') {
+        alert(message);
+        console.log(`Notification (${type}): ${message}`);
     }
 });

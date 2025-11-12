@@ -4,7 +4,7 @@ from flask_restx import Api, Resource, fields
 from models import db, Transaction
 from config import Config
 import os
-import requests # Untuk memanggil service lain
+import requests
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -25,7 +25,6 @@ api = Api(app, doc='/api-docs/', version='1.0',
               }
           })
 
-# API Models
 transaction_model = api.model('Transaction', {
     'id': fields.Integer,
     'user_id': fields.Integer,
@@ -42,10 +41,11 @@ payment_input_model = api.model('PaymentInput', {
 
 payments_ns = api.namespace('payments', description='Payment operations')
 
-# Update model untuk PUT (hanya status yang bisa diubah)
 transaction_update_model = api.model('TransactionUpdate', {
     'status': fields.String(description='Transaction status (SUCCESS/FAILED/PENDING)')
 })
+
+internal_ns = api.namespace('internal', description='Internal service-to-service operations')
 
 @payments_ns.route('/')
 class TransactionList(Resource):
@@ -85,7 +85,6 @@ class TransactionResource(Resource):
 
         data = request.get_json()
 
-        # ONLY allow status update, NOT amount/user_id/order_id
         if 'status' in data:
             allowed_statuses = ['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED']
             if data['status'] in allowed_statuses:
@@ -114,51 +113,56 @@ class TransactionResource(Resource):
         db.session.commit()
         return {'message': 'Transaction deleted successfully'}, 200
 
-# --- Internal Endpoint for OrderService ---
-@app.route('/internal/process', methods=['POST'])
-def process_payment():
-    """
-    Internal endpoint to process a payment.
-    This is a CONSUMER endpoint. It calls the User Service.
-    """
-    data = request.get_json()
-    user_id = data.get('user_id')
-    order_id = data.get('order_id')
-    amount = data.get('amount')
-    
-    # 1. Buat transaksi PENDING
-    new_transaction = Transaction(
-        user_id=user_id,
-        order_id=order_id,
-        amount=amount,
-        status='PENDING'
-    )
-    db.session.add(new_transaction)
-    db.session.commit()
+@internal_ns.route('/process')
+class ProcessPaymentResource(Resource):
+    @internal_ns.doc('process_payment', security='Bearer Auth')
+    @internal_ns.expect(payment_input_model)
+    @internal_ns.response(200, 'Payment processed successfully', transaction_model)
+    @internal_ns.response(400, 'Payment failed (e.g., insufficient balance or invalid data)')
+    @internal_ns.response(500, 'Failed to connect to dependent services (e.g., User Service)')
+    def post(self):
+        """
+        Internal endpoint to process a payment.
+        This is a CONSUMER endpoint. It calls the User Service.
+        (Biasanya dipanggil oleh Order Service)
+        """
+        data = request.get_json()
+        user_id = data.get('user_id')
+        order_id = data.get('order_id')
+        amount = data.get('amount')
+        
+        if not all([user_id, order_id, amount]):
+            return {'error': 'Missing required fields: user_id, order_id, amount'}, 400
 
-    try:
-        # 2. Panggil User Service untuk mengurangi saldo
-        balance_update_url = f"{Config.USER_SERVICE_URL}/internal/users/{user_id}/balance"
-        payload = {'type': 'debit', 'amount': amount}
-        
-        response = requests.put(balance_update_url, json=payload)
-        
-        if response.status_code == 200:
-            # 3. Jika berhasil, update status transaksi
-            new_transaction.status = 'SUCCESS'
-            db.session.commit()
-            return jsonify(new_transaction.to_dict()), 200
-                    else:
-                        # 4. Jika gagal (misal: saldo tidak cukup)            error_msg = response.json().get('error', 'Payment failed')
+        new_transaction = Transaction(
+            user_id=user_id,
+            order_id=order_id,
+            amount=amount,
+            status='PENDING'
+        )
+        db.session.add(new_transaction)
+        db.session.commit()
+
+        try:
+            balance_update_url = f"{Config.USER_SERVICE_URL}/internal/users/{user_id}/balance"
+            payload = {'type': 'debit', 'amount': amount}
+            
+            response = requests.put(balance_update_url, json=payload, timeout=10)
+            
+            if response.status_code == 200:
+                new_transaction.status = 'SUCCESS'
+                db.session.commit()
+                return new_transaction.to_dict(), 200
+            else:
+                error_msg = response.json().get('error', 'Payment failed')
+                new_transaction.status = 'FAILED'
+                db.session.commit()
+                return {'error': error_msg}, 400
+
+        except requests.exceptions.RequestException as e:
             new_transaction.status = 'FAILED'
             db.session.commit()
-            return jsonify({'error': error_msg}), 400
-
-    except requests.exceptions.RequestException as e:
-        # 5. Gagal konek ke User Service
-        new_transaction.status = 'FAILED'
-        db.session.commit()
-        return jsonify({'error': f'Failed to connect to User Service: {str(e)}'}), 500
+            return {'error': f'Failed to connect to User Service: {str(e)}'}, 500
 
 @app.route('/health')
 def health_check():

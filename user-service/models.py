@@ -16,11 +16,9 @@ class User(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def set_password(self, password):
-        """Hash password menggunakan bcrypt dengan work factor dari config (10)"""
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def check_password(self, password):
-        """Verify password menggunakan bcrypt"""
         return bcrypt.check_password_hash(self.password_hash, password)
 
     def to_dict(self):

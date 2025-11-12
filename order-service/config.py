@@ -7,7 +7,6 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     PORT = int(os.getenv('PORT', 3003))
     SERVICE_NAME = os.getenv('SERVICE_NAME', 'order-service')
-    # Ambil URL service lain
     USER_SERVICE_URL = os.getenv('USER_SERVICE_URL')
     RESTAURANT_SERVICE_URL = os.getenv('RESTAURANT_SERVICE_URL')
     PAYMENT_SERVICE_URL = os.getenv('PAYMENT_SERVICE_URL')

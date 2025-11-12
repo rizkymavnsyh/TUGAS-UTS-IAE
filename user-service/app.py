@@ -8,13 +8,10 @@ import jwt
 from datetime import datetime, timedelta, timezone
 import time
 
-# Fungsi untuk menunggu database siap
 def wait_for_db(app, max_retries=10, delay=2):
-    """Menunggu koneksi MySQL siap sebelum memulai aplikasi."""
     with app.app_context():
         for i in range(max_retries):
             try:
-                # Mencoba query sederhana
                 db.session.execute(db.text('SELECT 1')).scalar()
                 print("Database connection successful!")
                 return
@@ -28,15 +25,12 @@ def wait_for_db(app, max_retries=10, delay=2):
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Initialize extensions
 db.init_app(app)
 
-# IMPORTANT: Init bcrypt dengan config yang sudah ada BCRYPT_LOG_ROUNDS=10
 bcrypt.init_app(app)
 
 CORS(app)
 
-# Initialize API documentation (Swagger)
 api = Api(app, doc='/api-docs/', version='1.0',
           title='User Service API',
           description='API for managing users and balance',
@@ -50,7 +44,6 @@ api = Api(app, doc='/api-docs/', version='1.0',
               }
           })
 
-# Define data models for documentation
 user_model = api.model('User', {
     'id': fields.Integer(description='User ID'),
     'username': fields.String(description='Username'),
@@ -89,16 +82,10 @@ class UserList(Resource):
             name=data.get('name', data['username'])
         )
         
-        # PERBAIKAN 3: Kembalikan bcrypt (dummy hash dihapus)
-        # Ini sekarang akan cepat karena BCRYPT_LOG_ROUNDS = 10
         user.set_password(data['password']) 
 
         db.session.add(user)
         db.session.commit()
-
-        # PERBAIKAN 4: Hapus panggilan consumer ke order-service
-        # Panggilan ini yang menyebabkan hang 30 detik kedua.
-        # Jangan panggil service lain dari sini kecuali benar-benar dibutuhkan.
         
         return user.to_dict(), 201
 
@@ -126,18 +113,15 @@ class UserResource(Resource):
 
         data = request.get_json()
 
-        # Update username if provided and not duplicate
         if 'username' in data and data['username'] != user.username:
             existing = User.query.filter_by(username=data['username']).first()
             if existing:
                 return {'error': 'Username already exists'}, 400
             user.username = data['username']
 
-        # Update name if provided
         if 'name' in data:
             user.name = data['name']
 
-        # Update password if provided
         if 'password' in data:
             user.set_password(data['password'])
 
@@ -156,14 +140,12 @@ class UserResource(Resource):
         db.session.commit()
         return {'message': 'User deleted successfully'}, 200
 
-# --- Endpoint Login & Refresh ---
 auth_ns = api.namespace('auth', description='Authentication operations')
 login_model = api.model('LoginInput', {
     'username': fields.String(required=True),
     'password': fields.String(required=True)
 })
 
-# Helper function to decode JWT without expiration check
 def decode_token_without_expiry(token):
     """Decode JWT token without verifying expiration"""
     try:
@@ -171,7 +153,6 @@ def decode_token_without_expiry(token):
     except jwt.InvalidTokenError:
         return None
 
-# Helper function to create access token
 def create_access_token(user):
     """Create access token with 1 hour expiration"""
     expiration_time = datetime.now(timezone.utc) + timedelta(hours=1)
@@ -184,7 +165,6 @@ def create_access_token(user):
     }
     return jwt.encode(token_payload, Config.JWT_SECRET, algorithm='HS256')
 
-# Helper function to create refresh token
 def create_refresh_token(user):
     """Create refresh token with 7 days expiration"""
     expiration_time = datetime.now(timezone.utc) + timedelta(days=7)
@@ -215,7 +195,7 @@ class LoginResource(Resource):
                 'success': True,
                 'access_token': access_token,
                 'refresh_token': refresh_token,
-                'token': access_token,  # Untuk backward compatibility
+                'token': access_token,
                 'user': {
                     'id': user.id,
                     'username': user.username,
@@ -246,25 +226,21 @@ class RefreshTokenResource(Resource):
             return {'error': 'Invalid authorization header format'}, 401
 
         try:
-            # Verify refresh token
             decoded = jwt.decode(refresh_token, Config.JWT_SECRET, algorithms=['HS256'])
 
-            # Check if token type is refresh
             if decoded.get('type') != 'refresh':
                 return {'error': 'Invalid token type. Expected refresh token'}, 401
 
-            # Get user from database
             user = User.query.get(decoded['id'])
             if not user:
                 return {'error': 'User not found'}, 404
 
-            # Generate new access token
             new_access_token = create_access_token(user)
 
             return {
                 'success': True,
                 'access_token': new_access_token,
-                'token': new_access_token,  # Untuk backward compatibility
+                'token': new_access_token,
                 'user': {
                     'id': user.id,
                     'username': user.username,
@@ -279,8 +255,6 @@ class RefreshTokenResource(Resource):
             return {'error': 'Refresh token has expired. Please login again'}, 401
         except jwt.InvalidTokenError:
             return {'error': 'Invalid refresh token'}, 401
-
-# --- Internal Endpoints (API Provider untuk Service Lain) ---
 
 @app.route('/internal/users/<int:user_id>')
 def get_user_internal(user_id):
@@ -309,12 +283,9 @@ def update_user_balance(user_id):
     db.session.commit()
     return jsonify(user.to_dict())
 
-# Health check
 @app.route('/health')
 def health_check():
     return jsonify({'status': 'healthy', 'service': os.getenv('SERVICE_NAME')})
 
-# Jangan jalankan apapun di __main__
-# Gunicorn akan menangani semuanya
 if __name__ == '__main__':
     pass

@@ -8,7 +8,7 @@ class Order(db.Model):
     user_id = db.Column(db.Integer, nullable=False)
     restaurant_id = db.Column(db.Integer, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='PENDING') # PENDING, PAID, FAILED
+    status = db.Column(db.String(20), nullable=False, default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     items = db.relationship('OrderItem', backref='order', lazy=True)
 
@@ -28,7 +28,7 @@ class OrderItem(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
     menu_item_id = db.Column(db.Integer, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    price_at_time = db.Column(db.Float, nullable=False) # Harga saat order
+    price_at_time = db.Column(db.Float, nullable=False)
 
     def to_dict(self):
         return {

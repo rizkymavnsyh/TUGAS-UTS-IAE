@@ -8,7 +8,7 @@ class Transaction(db.Model):
     user_id = db.Column(db.Integer, nullable=False)
     order_id = db.Column(db.Integer, nullable=False, unique=True)
     amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='PENDING') # PENDING, SUCCESS, FAILED
+    status = db.Column(db.String(20), nullable=False, default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
