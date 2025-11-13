@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Delivery Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            
+            --primary-gradient: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+            --primary-color: #74ebd5; 
+            --secondary-color: #6c63ff; 
+            
+            --background-light: #f8f9fa;
+            --background-dark: #e9ecef;
+            --text-dark: #343a40;
+            --text-muted: #6c757d;
+            --border-light: #dee2e6;
+            --shadow-light: rgba(0, 0, 0, 0.08);
+            --shadow-medium: rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .navbar {
+            
+            background: var(--primary-gradient) !important;
+            box-shadow: 0 2px 10px var(--shadow-medium);
+        }
+        .navbar-brand, .nav-link {
+            color: white !important;
+            font-weight: 500;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.1); 
+        }
+
+        .card {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 15px var(--shadow-light);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px var(--shadow-medium);
+        }
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid var(--border-light);
+            font-weight: 500;
+            color: var(--secondary-color); 
+        }
+        .card-title {
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 1rem;
+            height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
+
+        
+        .user-info {
+            
+            background: linear-gradient(135deg, #ACB6E5 0%, #74ebd5 100%); 
+            color: var(--text-dark);
+            border-radius: 0.75rem;
+        }
+
+        .user-info h3 {
+            
+            border-bottom: 2px solid white;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: white; 
+            font-weight: 700;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .user-info strong {
+            display: inline-block;
+            width: 100px; 
+            color: var(--secondary-color); 
+            font-weight: 700; 
+            text-shadow: none; 
+        }
+        
+        .user-info span {
+            font-weight: 700; 
+            color: white; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4); 
+            padding: 2px 0px;
+        }
+
+        .user-info .card-text {
+            padding: 8px 0;
+            margin-bottom: 0;
+            
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.7); 
+        }
+        .user-info .card-text:last-child {
+            border-bottom: none;
+        }
+        
+        
+        .user-info .bi {
+            color: var(--secondary-color); 
+            margin-right: 8px;
+        }
+
+        
+        .health-pill {
+            padding: 0.3rem 0.8rem;
+            border-radius: 50rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 1px solid white; 
+            background-color: rgba(255, 255, 255, 0.9); 
+            color: var(--secondary-color) !important; 
+        }
+        
+
+        
+        .action-group .btn {
+            
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        
+        .action-group .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        #rawResponse {
+            background: #2b2b2b; 
+            color: #f1f1f1;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-family: 'Roboto Mono', monospace; 
+            min-height: 200px;
+            margin-top: 1rem;
+            box-shadow: inset 0 1px 5px rgba(0,0,0,0.1);
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #ffffff, #f0f2f5);
+            border: 1px solid var(--border-light);
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            transition: all 0.2s ease-in-out;
+        }
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px var(--shadow-medium);
+        }
+        .metric-card h5 {
+            color: var(--secondary-color); 
+            font-weight: 500;
+        }
+        .metric-card h3 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-dark); 
+        }
+        .metric-card small {
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-top: 0.5rem; 
+            display: block; 
+        }
+        
+        .metric-card:nth-child(1) { border-left: 5px solid var(--secondary-color); } 
+        .metric-card:nth-child(2) { border-left: 5px solid var(--primary-color); } 
+        .metric-card:nth-child(3) { border-left: 5px solid #ffc107; } 
+        .metric-card:nth-child(4) { border-left: 5px solid #dc3545; } 
+
+
+        .health-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50rem; 
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 0.5rem;
+        }
+        .health-pill.healthy {
+            background-color: #d4edda; 
+            color: #155724; 
+        }
+        .health-pill.down {
+            background-color: #f8d7da; 
+            color: #721c24; 
+        }
+        .health-services .list-inline-item {
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background-color: var(--background-dark);
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-dark);
+        }
+
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-light);
+            border-radius: 0.5rem;
+        }
+        .table {
+            margin-bottom: 0; 
+        }
+        .table th, .table td {
+            padding: 0.75rem;
+            vertical-align: middle;
+            border-top: 1px solid var(--border-light);
+        }
+        .table thead th {
+            background-color: var(--background-dark);
+            border-bottom: 2px solid var(--border-light);
+            font-weight: 500;
+            color: var(--text-dark);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .table tbody tr:hover {
+            background-color: #f0f0f0;
+        }
+        .table .btn {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            border-radius: 0.3rem;
+        }
+
+        .timeline-list {
+            padding-left: 0;
+            list-style: none;
+        }
+        .timeline-item {
+            border-left: 3px solid var(--primary-color); 
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -0.45rem;
+            top: 0;
+            width: 0.75rem;
+            height: 0.75rem;
+            background-color: var(--primary-color); 
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        .timeline-item strong {
+            color: var(--secondary-color); 
+            font-weight: 500;
+        }
+        .timeline-item span {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .modal-content {
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 25px var(--shadow-medium);
+        }
+        .modal-header {
+            border-bottom: 1px solid var(--border-light);
+            background-color: var(--background-light);
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+        }
+        .modal-title {
+            color: var(--secondary-color); 
+            font-weight: 500;
+        }
+        .modal-footer {
+            border-top: 1px solid var(--border-light);
+            background-color: var(--background-light);
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        .form-control, .form-select {
+            border-radius: 0.5rem;
+            border-color: var(--border-light);
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color); 
+            
+            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
+        }
+
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--primary-gradient);
+            opacity: 0.9;
+            color: white;
+        }
+        .btn-success {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #5a50e0; 
+            border-color: #5a50e0;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Food Delivery System Dashboard</a>
+            <div class="d-flex">
+                <button id="logoutBtn" class="btn btn-danger">Logout</button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-3 sidebar">
+                    <div class="card-body user-info">
+                                                <h3 class="card-title"><i class="bi bi-person-circle me-2"></i>User Profile</h3>
+                                                <p class="card-text"><i class="bi bi-fingerprint me-2"></i><strong>ID:</strong> <span id="userId">N/A</span></p>
+                                                <p class="card-text"><i class="bi bi-person-badge me-2"></i><strong>Username:</strong> <span id="userUsername">N/A</span></p>
+                                                <p class="card-text"><i class="bi bi-shield-fill-check me-2"></i><strong>Role:</strong> <span id="userRole">N/A</span></p>
+                                                <p class="card-text"><i class="bi bi-activity me-2"></i><strong>Service Status:</strong> <span id="sidebarHealth" class="health-pill">Unknown</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">API Actions via Gateway</h2>
+                            <p class="text-muted mb-0">Seluruh permintaan dikirim melalui API Gateway tunggal menuju microservice terkait.</p>
+                        </div>
+                        <small class="text-muted" id="lastUpdated">Belum ada data</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <div class="card metric-card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Users</h5>
+                                        <h3 class="card-text" id="metricUsers">0</h3>
+                                        <small class="text-muted" id="metricUsersMeta">Menunggu data</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card metric-card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Restaurants</h5>
+                                        <h3 class="card-text" id="metricRestaurants">0</h3>
+                                        <small class="text-muted" id="metricRestaurantsMeta">Menunggu data</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card metric-card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Orders</h5>
+                                        <h3 class="card-text" id="metricOrders">0</h3>
+                                    </div>
+                                    <small class="text-muted" id="metricOrdersMeta">Menunggu data</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card metric-card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Payments (GMV)</h5>
+                                        <h3 class="card-text" id="metricPayments">0</h3>
+                                    </div>
+                                    <small class="text-muted" id="metricPaymentsMeta">Menunggu data</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Gateway & Service Health</h5>
+                            </div>
+                            <div class="card-body">
+                                <span class="health-pill" id="healthStatus">Unknown</span>
+                                <ul id="healthServices" class="list-inline mt-2">
+                                    <li class="list-inline-item">Belum dicek</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="action-group mb-3">
+                            <div class="row g-2 mb-2"> <div class="col">
+                                    <button id="fetchUsersBtn" class="btn btn-primary w-100">Fetch All Users</button>
+                                </div>
+                                <div class="col">
+                                    <button id="createUserBtn" class="btn btn-success w-100">Create New User</button>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col">
+                                    <button id="fetchRestaurantsBtn" class="btn btn-primary w-100">Fetch Restaurants</button>
+                                </div>
+                                <div class="col">
+                                    <button id="createRestaurantBtn" class="btn btn-success w-100">Create New Restaurant</button>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col">
+                                    <button id="fetchOrdersBtn" class="btn btn-primary w-100">Fetch Orders</button>
+                                </div>
+                                <div class="col">
+                                    <button id="createOrderBtn" class="btn btn-success w-100">Create New Order</button>
+                                </div>
+                            </div>
+                            <div class="row g-2"> <div class="col">
+                                    <button id="fetchPaymentsBtn" class="btn btn-primary w-100">Fetch Payments</button>
+                                </div>
+                                <div class="col">
+                                    <button id="createPaymentBtn" class="btn btn-success w-100">Create New Payment</button>
+                                </div>
+                            </div>
+                        </div>
+
+                                                <div class="row g-3">
+                                                        <div class="col-md-12">                                 <div class="card shadow-sm h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Users</h5>
+                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="users">Reload </button>
+                                    </div>
+                                    <div class="card-body table-responsive" id="usersTableContainer">
+                                        <p class="text-muted">Klik tombol fetch untuk memuat data pengguna.</p>
+                                    </div>
+                                </div>
+                            </div>
+                                                        <div class="col-md-12">                                 <div class="card shadow-sm h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Restaurants</h5>
+                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="restaurants">Reload </button>
+                                    </div>
+                                    <div class="card-body table-responsive" id="restaurantsTableContainer">
+                                        <p class="text-muted">Menunggu data restoran.</p>
+                                    </div>
+                                </div>
+                            </div>
+                                                        <div class="col-md-12">                                 <div class="card shadow-sm h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Orders</h5>
+                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="orders">Reload </button>
+                                    </div>
+                                    <div class="card-body table-responsive" id="ordersTableContainer">
+                                        <p class="text-muted">Menunggu data order.</p>
+                                    </div>
+                                </div>
+                            </div>
+                                                        <div class="col-md-12">                                 <div class="card shadow-sm h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Payments</h5>
+                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="payments">Reload </button>
+                                    </div>
+                                    <div class="card-body table-responsive" id="paymentsTableContainer">
+                                        <p class="text-muted">Menunggu data pembayaran.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                                <div class="card shadow-sm mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recent Cross-Service Activity</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul id="activityTimeline" class="list-unstyled timeline-list">
+                                    <li class="text-muted">Timeline akan tampil setelah Orders atau Payments berhasil diambil.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Last API Response (JSON)</h5>
+                            </div>
+                            <div class="card-body">
+                                <pre id="rawResponse" class="p-3 bg-dark text-white rounded">Click a button to fetch data from the Microservices via API Gateway...</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="crudModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="crudForm">
+                    <div class="modal-body">
+                        <div id="formFields">
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeModalBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="saveChangesBtn">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+</body>
+</html>
