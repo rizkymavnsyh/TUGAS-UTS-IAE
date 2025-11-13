@@ -1,1713 +1,942 @@
-# Project Requirement — UTS
+# Food Delivery Microservices System
 
-## Mata Kuliah:IAE/EAI
----
+Sistem food delivery berbasis microservices architecture dengan JWT authentication, mendemonstrasikan inter-service communication dan API Gateway pattern untuk aplikasi e-commerce makanan.
 
-## 1. Latar Belakang
+**📚 Mata Kuliah:** Integrasi Aplikasi Enterprise 
+**🎓 Institusi:** Telkom University
+**📅 Semester:** 5
 
-Di era digital saat ini, banyak aplikasi tidak lagi berdiri sendiri, melainkan saling terhubung melalui Application Programming Interface (API). API memungkinkan sistem berbeda untuk bertukar data dan fungsi, seperti sistem pembayaran, layanan e-commerce, transportasi online, hingga aplikasi kesehatan digital. Untuk memastikan komunikasi antar sistem berjalan baik dan terdokumentasi dengan jelas, digunakan Postman/Swagger (OpenAPI) sebagai alat dokumentasi API.
-
----
-
-## 2. Tujuan Proyek
-
-Mahasiswa diharapkan mampu:
-
-1. **Membangun minimal layanan sebanyak jumlah anggota kelompok** (minimal 2 layanan) yang dapat berkomunikasi melalui API (Masing-masing berperan sebagai provider, dan Consumer)
-2. **Service as Provider**: Penyedia API
-   - Contohnya: user-service
-   - Menyediakan endpoint seperti `/users`, `/users/:id`, dsb.
-   - Format data: JSON
-   - Komunikasi via HTTP (GET, POST, PUT, DELETE)
-3. **Consumer**: Untuk consumer, cukup menggunakan frontend sederhana (bisa menggunakan React, Vue, atau HTML + JS biasa). Frontend ini nanti:
-   - Memanggil API Gateway,
-   - Menampilkan data dari dua layanan.
-   - Misalnya:
-     - Halaman "Users" ambil data dari REST API Users
-4. **Komunikasi melalui 1 API Gateway**
-5. **Mengimplementasikan REST API dengan format JSON.**
-6. **Membuat dokumentasi API menggunakan Swagger / OpenAPI Specification ATAU Postman.**
-7. **Memahami konsep service integration antar sistem secara sederhana.**
 
 ---
 
-## 3. Deskripsi Proyek
+## 📋 Deskripsi Proyek
 
-Mahasiswa diminta membuat dua atau lebih layanan yang saling berkomunikasi menggunakan API. Setiap layanan harus memiliki endpoint sendiri dan saling bertukar data menggunakan protokol HTTP. Dokumentasi API wajib dibuat dan dapat diakses melalui Swagger UI.
+### Topik
+**Food Delivery Platform dengan Microservices Architecture**
 
----
+### Overview
+Proyek ini mengimplementasikan sistem pemesanan makanan online yang terdiri dari **4 microservices independen** (User, Restaurant, Order, Payment) yang berkomunikasi melalui **API Gateway tunggal**. Sistem ini mendemonstrasikan:
 
-## 4. Contoh Tema/Topik Pilihan (pilih salah satu atau kembangkan)
+✅ **JWT-based authentication** & role-based authorization (admin/user)  
+✅ **Service-to-service communication** via HTTP/REST  
+✅ **Orchestrated transactions** (Order Service sebagai orchestrator)  
+✅ **Centralized API routing** & security via API Gateway  
+✅ **4 isolated databases** (satu per service)  
+✅ **Full CRUD operations** dengan Swagger UI documentation  
 
-| No | Topik | Deskripsi Singkat |
-|----|-------|-------------------|
-| 1 | **Digital Payment Service (E-Wallet)** | Layanan pengguna dan transaksi saling berkomunikasi; misalnya user-service dan payment-service. |
-| 2 | **Smart Healthcare System** | Layanan pasien dan layanan rekam medis terhubung via API untuk pendaftaran dan pengecekan riwayat. |
-| 3 | **Online Learning Platform (EduConnect)** | Layanan siswa, kursus, dan nilai saling berkomunikasi (misal: course-service dan student-service). |
-| 4 | **Public Transportation Tracker** | Layanan kendaraan dan jadwal terhubung; misal bus-service dan route-service. |
-| 5 | **Food Delivery System** | Layanan restoran, pelanggan, dan pesanan saling terhubung menggunakan REST API. |
+### Tech Stack
 
----
+**Backend:**
+- **API Gateway**: Node.js + Express.js + JWT + http-proxy-middleware
+- **Microservices**: Python Flask + Flask-RESTX + SQLAlchemy
+- **Database**: MySQL 8.0 (4 databases terpisah)
 
-## 5. Spesifikasi Teknis Minimal
+**Frontend:**
+- HTML5, CSS3 (Bootstrap 5)
+- Vanilla JavaScript (Fetch API)
 
-| Komponen | Keterangan |
-|----------|------------|
-| **Arsitektur** | Minimal **layanan sebanyak jumlah anggota kelompok** (minimal 2) REST API yang saling berkomunikasi (misal: User Service ↔ Order Service) |
-| **Format Data** | JSON |
-| **Dokumentasi** | Menggunakan Swagger / OpenAPI ATAU Postman |
-| **Framework Backend** | Boleh menggunakan Node.js (Express), Flask, Spring Boot, Laravel, atau lainnya |
-| **Database** | MySQL / MongoDB / PostgreSQL / SQLite (pilih salah satu) |
-| **Testing Tools** | Postman atau Swagger UI |
-| **Integrasi API** | Salah satu service melakukan API call ke service lain |
-| **API Gateway** | Wajib menggunakan 1 API Gateway sebagai pintu masuk komunikasi |
+**DevOps:**
+- Docker & Docker Compose
+- Gunicorn (Python WSGI server)
+- Health check monitoring
 
----
-
-## 6. Arsitektur Sistem
-
-### Diagram Arsitektur Umum
-
-```mermaid
-graph TB
-    Client[Frontend Client] --> Gateway[API Gateway]
-    
-    Gateway --> Service1[Service 1<br/>Provider & Consumer]
-    Gateway --> Service2[Service 2<br/>Provider & Consumer]
-    Gateway --> Service3[Service 3<br/>Provider & Consumer]
-    Gateway --> Service4[Service 4<br/>Provider & Consumer]
-    
-    Service1 -.->|HTTP Request/Response| Service2
-    Service2 -.->|HTTP Request/Response| Service3
-    Service3 -.->|HTTP Request/Response| Service4
-    Service4 -.->|HTTP Request/Response| Service1
-    
-    subgraph ServiceLayer [Service Layer]
-        Service1
-        Service2
-        Service3
-        Service4
-    end
-    
-    subgraph DataLayer [Data Layer]
-        DB1[(Database 1)]
-        DB2[(Database 2)]
-        DB3[(Database 3)]
-        DB4[(Database 4)]
-    end
-    
-    Service1 --> DB1
-    Service2 --> DB2
-    Service3 --> DB3
-    Service4 --> DB4
-```
-
-### Contoh Alur Komunikasi: E-Commerce
-
-```mermaid
-sequenceDiagram
-    participant Client as Frontend Client
-    participant Gateway as API Gateway
-    participant OrderService as Order Service
-    participant UserService as User Service
-    participant ProductService as Product Service
-    participant NotificationService as Notification Service
-    
-    Client->>Gateway: POST /orders
-    Gateway->>OrderService: Forward request
-    
-    OrderService->>UserService: GET /users/{id}
-    UserService-->>OrderService: User data
-    
-    OrderService->>ProductService: GET /products/{id}
-    ProductService-->>OrderService: Product data
-    
-    OrderService->>ProductService: PUT /products/{id}/stock
-    ProductService-->>OrderService: Updated stock
-    
-    OrderService->>NotificationService: POST /notifications
-    NotificationService-->>OrderService: Notification sent
-    
-    OrderService-->>Gateway: Order response
-    Gateway-->>Client: Order confirmation
-```
+**Testing:**
+- Postman Collection (29 endpoints)
+- Swagger UI (setiap service)
 
 ---
 
-## 7. Contoh Implementasi API
+## 🏗️ Arsitektur Sistem
 
-### Digital Payment Service (E-Wallet)
+### Diagram Arsitektur
 
-#### User Service (Provider)
-
-```javascript
-// Provider Endpoints
-GET    /users              - Mendapatkan semua user
-GET    /users/{id}         - Mendapatkan user berdasarkan ID
-POST   /users              - Membuat user baru
-PUT    /users/{id}         - Update data user
-DELETE /users/{id}         - Hapus user
-GET    /users/{id}/balance - Mendapatkan saldo user
+```
+┌──────────────┐
+│    Client    │ (Browser - login.html / dashboard.html)
+│ (Port: File) │
+└──────┬───────┘
+       │ HTTP/JSON + JWT Bearer Token
+       ▼
+┌─────────────────────┐
+│   API Gateway       │ ← Single Entry Point (Port 3000)
+│   (Node.js + JWT)   │   • Authentication (login/refresh)
+│   Port: 3000        │   • Route forwarding & proxy
+└──────┬──────────────┘   • Role-based access control (admin/user)
+       │                   • CORS handling
+       │
+       │ Forward requests with X-User-Id headers
+       │
+   ┌───┴────┬────────────┬───────────┐
+   │        │            │           │
+   ▼        ▼            ▼           ▼
+┌────────┐ ┌──────────┐ ┌────────┐ ┌─────────┐
+│  User  │ │Restaurant│ │ Order  │ │ Payment │
+│Service │ │ Service  │ │Service │ │ Service │
+│ :3001  │ │  :3002   │ │ :3003  │ │  :3004  │
+│Provider│ │ Provider │ │Consumer│ │ Provider│
+└───┬────┘ └─────┬────┘ └───┬────┘ └────┬────┘
+    │            │           │           │
+    │            │   Inter-service HTTP  │
+    │            │   Communication       │
+    │            │   (Internal endpoints)│
+    │            │           │           │
+    └────────────┴───────────┴───────────┘
+                     │
+          ┌──────────┴──────────┐
+          ▼          ▼          ▼         ▼
+      ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐
+      │users│   │resto│   │order│   │pay  │
+      │_db  │   │_db  │   │_db  │   │_db  │
+      └─────┘   └─────┘   └─────┘   └─────┘
+         MySQL 8.0 (Port 3309 → 3306)
 ```
 
-#### Payment Service (Provider & Consumer)
+### Communication Flow
 
-```javascript
-// Provider Endpoints
-GET    /transactions       - Mendapatkan semua transaksi
-GET    /transactions/{id}  - Mendapatkan transaksi berdasarkan ID
-POST   /transactions       - Membuat transaksi baru
-PUT    /transactions/{id}  - Update status transaksi
+**1. Client → API Gateway**: Login & mendapat JWT token  
+**2. Client → API Gateway → Services**: Semua request melalui gateway dengan validasi token  
+**3. Order Service → Restaurant Service**: Ambil harga menu item  
+**4. Order Service → User Service**: Validasi user existence  
+**5. Order Service → Payment Service**: Proses pembayaran otomatis  
 
-// Consumer Endpoints
-GET    /internal/users/{id}      - Mengambil data user dari UserService
-PUT    /internal/users/{id}/balance - Update saldo user
-```
+### Service Roles
 
-### Smart Healthcare System
-
-#### Patient Service (Provider)
-
-```javascript
-GET    /patients           - Mendapatkan semua pasien
-GET    /patients/{id}      - Mendapatkan pasien berdasarkan ID
-POST   /patients           - Mendaftarkan pasien baru
-PUT    /patients/{id}      - Update data pasien
-GET    /patients/{id}/records - Mendapatkan rekam medis pasien
-```
-
-#### Medical Record Service (Provider & Consumer)
-
-```javascript
-// Provider Endpoints
-GET    /medical-records    - Mendapatkan semua rekam medis
-GET    /medical-records/{id} - Mendapatkan rekam medis berdasarkan ID
-POST   /medical-records    - Membuat rekam medis baru
-PUT    /medical-records/{id} - Update rekam medis
-
-// Consumer Endpoints
-GET    /internal/patients/{id}   - Mengambil data pasien dari PatientService
-POST   /internal/patients/{id}/records - Menambah rekam medis ke pasien
-```
+| Service | Role | Port | Database | Deskripsi |
+|---------|------|------|----------|-----------|
+| **API Gateway** | Router | 3000 | - | Entry point, JWT auth, proxy |
+| **User Service** | Provider | 3001 | users_db | User CRUD, password hashing |
+| **Restaurant Service** | Provider | 3002 | restaurants_db | Restaurant & menu CRUD |
+| **Order Service** | **Consumer** | 3003 | orders_db | Orchestrates order flow, calls other services |
+| **Payment Service** | Provider | 3004 | payments_db | Payment processing |
 
 ---
 
-## 8. Implementasi API Gateway
+## 🚀 Cara Menjalankan
 
-### Contoh Implementasi dengan Node.js/Express
+### Prerequisites
+- Docker Desktop (v20.10+) - **REQUIRED**
+- Docker Compose (v2.0+) - **REQUIRED**
+- Port tersedia: 3000, 3001-3004, 3309
+- Browser modern (Chrome, Firefox, Edge)
 
-#### Implementasi Dasar (Tanpa Autentikasi)
-
-```javascript
-const express = require('express');
-const httpProxy = require('http-proxy-middleware');
-const cors = require('cors');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Enable CORS
-app.use(cors());
-
-// Service URLs
-const services = {
-  userService: 'http://localhost:3001',
-  paymentService: 'http://localhost:3002',
-  patientService: 'http://localhost:3003',
-  medicalRecordService: 'http://localhost:3004'
-};
-
-// Proxy middleware
-const proxy = (service) => {
-  return httpProxy.createProxyMiddleware({
-    target: services[service],
-    changeOrigin: true,
-    pathRewrite: {
-      [`^/api/${service}`]: ''
-    }
-  });
-};
-
-// Routes
-app.use('/api/user-service', proxy('userService'));
-app.use('/api/payment-service', proxy('paymentService'));
-app.use('/api/patient-service', proxy('patientService'));
-app.use('/api/medical-record-service', proxy('medicalRecordService'));
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    services: Object.keys(services)
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`API Gateway running on port ${PORT}`);
-});
-```
-
-#### Implementasi dengan JWT Authentication (Recommended)
-
-```javascript
-const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Service URLs
-const services = {
-  userService: 'http://localhost:3001',
-  paymentService: 'http://localhost:3002',
-  patientService: 'http://localhost:3003',
-  medicalRecordService: 'http://localhost:3004'
-};
-
-// Dummy user database (in production, use real database)
-const users = [
-  {
-    id: 1,
-    username: 'admin',
-    password: '$2a$10$rqFz8K7W7W7W7W7W7W7W7.W7W7W7W7W7W7W7W7W7W7W7W7W7W7', // 'admin123'
-    role: 'admin'
-  }
-];
-
-// JWT Authentication Middleware
-const authenticateJWT = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({ 
-      error: 'Access denied. No token provided.' 
-    });
-  }
-
-  const token = authHeader.split(' ')[1]; // Bearer TOKEN
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(403).json({ 
-      error: 'Invalid or expired token.' 
-    });
-  }
-};
-
-// Optional: Role-based authorization middleware
-const authorizeRoles = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        error: 'Access denied. Insufficient permissions.'
-      });
-    }
-    next();
-  };
-};
-
-// Login endpoint
-app.post('/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ 
-      error: 'Username and password are required' 
-    });
-  }
-
-  // Find user
-  const user = users.find(u => u.username === username);
-  
-  if (!user) {
-    return res.status(401).json({ 
-      error: 'Invalid credentials' 
-    });
-  }
-
-  // Verify password
-  const validPassword = await bcrypt.compare(password, user.password);
-  
-  if (!validPassword) {
-    return res.status(401).json({ 
-      error: 'Invalid credentials' 
-    });
-  }
-
-  // Generate JWT token
-  const token = jwt.sign(
-    { 
-      id: user.id, 
-      username: user.username,
-      role: user.role 
-    },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-
-  res.json({
-    success: true,
-    token: token,
-    user: {
-      id: user.id,
-      username: user.username,
-      role: user.role
-    }
-  });
-});
-
-// Register endpoint (optional)
-app.post('/auth/register', async (req, res) => {
-  const { username, password, email } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ 
-      error: 'Username and password are required' 
-    });
-  }
-
-  // Check if user already exists
-  const existingUser = users.find(u => u.username === username);
-  
-  if (existingUser) {
-    return res.status(400).json({ 
-      error: 'Username already exists' 
-    });
-  }
-
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Create new user
-  const newUser = {
-    id: users.length + 1,
-    username,
-    password: hashedPassword,
-    email,
-    role: 'user'
-  };
-
-  users.push(newUser);
-
-  // Generate token
-  const token = jwt.sign(
-    { 
-      id: newUser.id, 
-      username: newUser.username,
-      role: newUser.role 
-    },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-
-  res.status(201).json({
-    success: true,
-    token: token,
-    user: {
-      id: newUser.id,
-      username: newUser.username,
-      role: newUser.role
-    }
-  });
-});
-
-// Verify token endpoint
-app.get('/auth/verify', authenticateJWT, (req, res) => {
-  res.json({
-    success: true,
-    user: req.user
-  });
-});
-
-// Refresh token endpoint
-app.post('/auth/refresh', authenticateJWT, (req, res) => {
-  const newToken = jwt.sign(
-    { 
-      id: req.user.id, 
-      username: req.user.username,
-      role: req.user.role 
-    },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-
-  res.json({
-    success: true,
-    token: newToken
-  });
-});
-
-// Proxy middleware with JWT forwarding
-const createAuthProxy = (service) => {
-  return createProxyMiddleware({
-    target: services[service],
-    changeOrigin: true,
-    pathRewrite: {
-      [`^/api/${service}`]: ''
-    },
-    onProxyReq: (proxyReq, req, res) => {
-      // Forward JWT token to backend services
-      if (req.user) {
-        proxyReq.setHeader('X-User-Id', req.user.id);
-        proxyReq.setHeader('X-User-Role', req.user.role);
-        proxyReq.setHeader('X-User-Username', req.user.username);
-      }
-    }
-  });
-};
-
-// Protected routes (require authentication)
-app.use('/api/user-service', authenticateJWT, createAuthProxy('userService'));
-app.use('/api/payment-service', authenticateJWT, createAuthProxy('paymentService'));
-app.use('/api/patient-service', authenticateJWT, createAuthProxy('patientService'));
-app.use('/api/medical-record-service', authenticateJWT, createAuthProxy('medicalRecordService'));
-
-// Public routes (no authentication required)
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    services: Object.keys(services)
-  });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    error: 'Internal server error',
-    message: err.message
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`API Gateway with JWT running on port ${PORT}`);
-  console.log(`Login endpoint: http://localhost:${PORT}/auth/login`);
-});
-```
-
-#### Package.json untuk API Gateway dengan JWT
-
-```json
-{
-  "name": "api-gateway",
-  "version": "1.0.0",
-  "description": "API Gateway with JWT Authentication",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "http-proxy-middleware": "^2.0.6",
-    "cors": "^2.8.5",
-    "jsonwebtoken": "^9.0.2",
-    "bcryptjs": "^2.4.3",
-    "dotenv": "^16.3.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  }
-}
-```
-
-#### .env untuk API Gateway
+### 1️⃣ Clone Repository
 
 ```bash
+git clone <repository-url>
+cd food-delivery-microservices
+```
+
+### 2️⃣ Start All Services (Docker Compose)
+
+```bash
+# Build & start semua services sekaligus
+docker-compose up -d --build
+
+# Verifikasi semua services running
+docker-compose ps
+
+# Expected output:
+# NAME                STATUS              PORTS
+# mysql-db           running (healthy)   0.0.0.0:3309->3306/tcp
+# api-gateway        running             0.0.0.0:3000->3000/tcp
+# user-service       running             0.0.0.0:3001->3001/tcp
+# restaurant-service running             0.0.0.0:3002->3002/tcp
+# order-service      running             0.0.0.0:3003->3003/tcp
+# payment-service    running             0.0.0.0:3004->3004/tcp
+```
+
+### ⏱️ Startup Order (Otomatis via `depends_on`)
+
+Docker Compose mengatur startup order secara otomatis:
+
+1. **MySQL** (10-30 detik) → Tunggu health check passed
+2. **User, Restaurant, Payment Services** → Start setelah MySQL ready
+3. **Order Service** → Start setelah User, Restaurant, Payment ready
+4. **API Gateway** → Start terakhir setelah semua services ready
+
+**💡 Tips:** Tunggu ~1-2 menit pertama kali untuk MySQL initialization.
+
+### 3️⃣ Verify Services Running
+
+```bash
+# Cek logs semua services
+docker-compose logs -f
+
+# Cek logs service tertentu
+docker-compose logs -f order-service
+
+# Test health check
+curl http://localhost:3000/health
+curl http://localhost:3001/health
+curl http://localhost:3002/health
+curl http://localhost:3003/health
+curl http://localhost:3004/health
+```
+
+### 4️⃣ Akses Aplikasi
+
+**API Gateway:**
+- Base URL: http://localhost:3000
+- Health Check: http://localhost:3000/health
+
+**Swagger UI Documentation:**
+- User Service: http://localhost:3001/api-docs/
+- Restaurant Service: http://localhost:3002/api-docs/
+- Order Service: http://localhost:3003/api-docs/
+- Payment Service: http://localhost:3004/api-docs/
+
+**Dashboard UI:**
+- Login Page: `dashboard/login.html` (buka di browser)
+- Dashboard: `dashboard/dashboard.html` (setelah login)
+
+### 5️⃣ Login & Testing
+
+**Default Credentials:**
+- **Admin**: `admin` / `admin123` (full CRUD access)
+- **User**: `rizky` / `user123` (read-only access)
+
+**Quick Test via Postman:**
+1. Import `uts-iae-collection-full-crud.json`
+2. Import `uts-iae-environment.json`
+3. Run request: **POST Login (Get JWT Token)**
+4. Token otomatis tersimpan di Collection Variable
+5. Test endpoint lainnya
+
+### 6️⃣ Stop Services
+
+```bash
+# Stop semua services (data tetap tersimpan)
+docker-compose down
+
+# Stop dan hapus semua data (HATI-HATI!)
+docker-compose down -v
+
+# Restart service tertentu
+docker-compose restart order-service
+```
+
+---
+
+## 🔧 Environment Variables
+
+File `.env` sudah disediakan di setiap folder service. **Tidak perlu setup manual** kecuali ingin customize.
+
+### API Gateway (`api-gateway/.env`)
+```env
 PORT=3000
-JWT_SECRET=your-very-secret-jwt-key-change-this-in-production
+JWT_SECRET=your-very-secret-jwt-key-change-in-production
 JWT_EXPIRATION=24h
 NODE_ENV=development
-
-# Service URLs
-USER_SERVICE_URL=http://localhost:3001
-PAYMENT_SERVICE_URL=http://localhost:3002
-PATIENT_SERVICE_URL=http://localhost:3003
-MEDICAL_RECORD_SERVICE_URL=http://localhost:3004
 ```
 
-#### Cara Menggunakan JWT dari Frontend
+### Order Service (`order-service/.env`)
+```env
+SECRET_KEY=order-secret-key
+DATABASE_URL=mysql+pymysql://root:@mysql-db:3306/orders_db
+PORT=3003
+SERVICE_NAME=order-service
 
-```javascript
-// Login
-const login = async (username, password) => {
-  try {
-    const response = await fetch('http://localhost:3000/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password })
-    });
+# Service URLs untuk inter-service communication
+USER_SERVICE_URL=http://user-service:3001
+RESTAURANT_SERVICE_URL=http://restaurant-service:3002
+PAYMENT_SERVICE_URL=http://payment-service:3004
+```
 
-    const data = await response.json();
-    
-    if (data.success) {
-      // Save token to localStorage
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      return data;
+### User, Restaurant, Payment Services
+Sama seperti Order Service, sesuaikan:
+- `DATABASE_URL` → database name per service
+- `PORT` → port number unik
+- `SERVICE_NAME` → nama service
+
+---
+
+## 👥 Tim & Pembagian Tugas
+
+| Nama | NIM | Peran Utama | Kontribusi Detail |
+|------|-----|-------------|-------------------|
+| **Alvina Sulistina** | 102022300102 | **Technical Writer** | • Dokumentasi lengkap (README.md, API documentation)<br>• User manual & troubleshooting guide<br>• Screenshot dokumentasi (Swagger, Postman, Health Check)<br>• Quality assurance dokumentasi |
+| **Mochamad Rizky Maulana Aviansyah** | 102022300021 | **Full Stack Developer** | • **API Gateway** (Node.js + Express):<br>&nbsp;&nbsp;◦ JWT authentication & token management<br>&nbsp;&nbsp;◦ Request routing & proxy middleware<br>&nbsp;&nbsp;◦ CORS & error handling<br>• **Frontend Dashboard**:<br>&nbsp;&nbsp;◦ Login/dashboard UI dengan Bootstrap<br>&nbsp;&nbsp;◦ Real-time data fetching via fetch() API<br>&nbsp;&nbsp;◦ Metrics cards & activity timeline |
+| **Bimo Alfarizy Lukman** | 102022330069 | **Documentation & QA Engineer** | • Postman collection lengkap (29 endpoints)<br>• Testing manual & automated (test scripts)<br>• Screenshot dokumentasi:<br>&nbsp;&nbsp;◦ Swagger UI (4 services)<br>&nbsp;&nbsp;◦ Postman requests & responses<br>&nbsp;&nbsp;◦ Health check endpoints<br>• Bug reporting & regression testing |
+| **Revaldo A. Nainggolan** | 102022330325 | **Backend Architect** | • **User Service** (Flask):<br>&nbsp;&nbsp;◦ User CRUD operations<br>&nbsp;&nbsp;◦ Bcrypt password hashing<br>&nbsp;&nbsp;◦ JWT token generation & validation<br>• **Restaurant Service** (Flask):<br>&nbsp;&nbsp;◦ Restaurant & menu CRUD<br>&nbsp;&nbsp;◦ Menu item pricing logic<br>• **Order Service** (Flask):<br>&nbsp;&nbsp;◦ Order creation & status management<br>&nbsp;&nbsp;◦ **Service orchestration**: calls User, Restaurant, Payment<br>&nbsp;&nbsp;◦ Transaction flow coordination<br>• **Payment Service** (Flask):<br>&nbsp;&nbsp;◦ Payment transaction processing<br>&nbsp;&nbsp;◦ Balance validation & ledger<br>• Database schema design (MySQL)<br>• Inter-service communication architecture |
+| **[Tim Bersama]** | - | **DevOps & Infrastructure** | • Docker containerization setup<br>• Docker Compose orchestration<br>• MySQL database initialization (init-db.sql)<br>• Health check endpoints<br>• Service monitoring & logging<br>• Integration testing & deployment |
+
+---
+
+## 📡 Ringkasan Endpoint API
+
+### 🔓 Public Endpoints (No Auth Required)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/login` | Login & get JWT token (expires 24h) |
+| POST | `/auth/refresh` | Refresh access token using refresh token |
+
+### 🔒 Protected Endpoints (Auth Required)
+
+Semua endpoint di bawah memerlukan header:
+```
+Authorization: Bearer {token}
+```
+
+#### **User Service** (`/api/user/`)
+
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| GET | `/users/` | admin, user | List all users |
+| GET | `/users/:id` | admin, user | Get user by ID |
+| POST | `/users/` | **admin** 🔒 | Create new user |
+| PUT | `/users/:id` | **admin** 🔒 | Update user |
+| DELETE | `/users/:id` | **admin** 🔒 | Delete user |
+
+#### **Restaurant Service** (`/api/restaurant/`)
+
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| GET | `/restaurants/` | admin, user | List all restaurants |
+| GET | `/restaurants/:id` | admin, user | Get restaurant by ID |
+| GET | `/restaurants/:id/menu` | admin, user | Get menu by restaurant |
+| POST | `/restaurants/` | **admin** 🔒 | Create restaurant |
+| POST | `/restaurants/:id/menu` | **admin** 🔒 | Add menu item |
+| PUT | `/restaurants/:id` | **admin** 🔒 | Update restaurant |
+| DELETE | `/restaurants/:id` | **admin** 🔒 | Delete restaurant |
+
+#### **Order Service** (`/api/order/`)
+
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| GET | `/orders/` | admin, user | List all orders |
+| GET | `/orders/:id` | admin, user | Get order details |
+| POST | `/orders/` | **admin** 🔒 | **Create order (triggers payment)** |
+| PUT | `/orders/:id` | **admin** 🔒 | Update order status |
+| DELETE | `/orders/:id` | **admin** 🔒 | Delete order |
+
+**⚠️ POST /orders/ Flow:**
+1. Validasi `user_id` → call User Service
+2. Fetch harga menu → call Restaurant Service  
+3. Calculate `total_price`
+4. Proses payment → call Payment Service
+5. Return order dengan status `PAID` jika payment berhasil
+
+#### **Payment Service** (`/api/payment/`)
+
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| GET | `/payments/` | admin, user | List all transactions |
+| GET | `/payments/:id` | admin, user | Get transaction details |
+| PUT | `/payments/:id` | **admin** 🔒 | Update payment status (DEMO) |
+| DELETE | `/payments/:id` | **admin** 🔒 | Delete payment (DEMO) |
+
+**📝 Note:** PUT dan DELETE untuk **DEMO purposes only**. Dalam production, transaction records harus immutable.
+
+---
+## 🚦 Testing Workflow
+### 🧪 Testing dengan Postman
+
+#### Import Collection
+
+**Files:**
+- `uts-iae-collection-full-crud.json` - Collection lengkap (29 endpoints)
+- `uts-iae-environment.json` - Environment variables
+
+**Steps:**
+1. Buka Postman Desktop/Web
+2. Click **Import** → pilih kedua file
+3. Collection muncul di sidebar kiri
+4. Select environment "UTS IAE Environment"
+
+### 📂 Struktur Collection
+
+Collection terdiri dari **6 kategori** dengan **29 endpoints**:
+
+#### **1. AUTHENTICATION** (4 requests)
+- POST Login (Get JWT Token) - Admin login
+- POST Seed Read-Only User - Create user 'rizky'
+- POST Login as User (Read-Only Access) - User login
+- POST Refresh Token - Get new access token
+
+#### **2. USER SERVICE - FULL CRUD** (5 requests)
+- GET All Users
+- GET User by ID
+- POST Create User (admin only)
+- PUT Update User (admin only)
+- DELETE User (admin only)
+
+#### **3. RESTAURANT SERVICE - FULL CRUD** (5 requests)
+- GET All Restaurants
+- GET Restaurant by ID
+- POST Create Restaurant (admin only)
+- PUT Update Restaurant (admin only)
+- DELETE Restaurant (admin only)
+
+#### **4. MENU ITEMS - FULL CRUD** (5 requests)
+- GET All Menu Items by Restaurant
+- GET Menu Item by ID
+- POST Create Menu Item (admin only)
+- PUT Update Menu Item (admin only)
+- DELETE Menu Item (admin only)
+
+#### **5. ORDER SERVICE** (5 requests)
+- GET All Orders
+- POST Create Order (Full Flow) - **Trigger payment otomatis**
+- GET Order by ID
+- PUT Update Order Status (Demo)
+- DELETE Order (Demo)
+
+#### **6. PAYMENT SERVICE - FULL CRUD** (5 requests)
+- GET All Transactions
+- GET Transaction by ID
+- POST Process Payment (Create Transaction)
+- PUT Update Transaction Status (DEMO ONLY)
+- DELETE Transaction (DEMO ONLY)
+
+### 🔄 Testing Flow (Recommended Order)
+
+**Step 1: Authentication**
+```bash
+1. POST Login (Get JWT Token)
+   → Credential: admin / admin123
+   → Token otomatis tersimpan di {{token}}
+   → User ID tersimpan di {{user_id}}
+```
+
+**Step 2: Seed Data (Optional)**
+```bash
+2. POST Seed Read-Only User
+   → Membuat user 'rizky' untuk testing RBAC
+```
+
+**Step 3: Test CRUD User Service**
+```bash
+3. GET All Users → Verify user admin & rizky ada
+4. POST Create User → Buat user baru
+5. GET User by ID → Verify user created
+6. PUT Update User → Update user data
+7. DELETE User → Hapus user (jika perlu)
+```
+
+**Step 4: Test CRUD Restaurant Service**
+```bash
+8. POST Create Restaurant → Buat restaurant (Pizza Hut)
+9. GET All Restaurants → Verify created
+10. POST Create Menu Item → Tambah menu (Pepperoni Pizza, Rp 85.000)
+11. GET All Menu Items by Restaurant → Verify menu
+```
+
+**Step 5: Test Order Flow (Inter-Service)**
+```bash
+12. POST Create Order (Full Flow)
+    Body: {
+      "user_id": 1,
+      "restaurant_id": 1,
+      "items": [{"menu_item_id": 1, "quantity": 2}]
     }
-  } catch (error) {
-    console.error('Login failed:', error);
-  }
-};
+    → Response: status "PAID" (payment otomatis berhasil)
+    → Order ID otomatis tersimpan di {{order_id}}
 
-// Make authenticated request
-const getUsers = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch('http://localhost:3000/api/user-service/users', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Failed to fetch users:', error);
-  }
-};
-
-// Logout
-const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = '/login.html';
-};
+13. GET All Orders → Verify order dengan items & total_price
+14. GET Order by ID → Detail order
 ```
 
-#### Contoh HTML Login Page
+**Step 6: Test Payment Service**
+```bash
+15. GET All Transactions → Verify payment transaction created
+16. GET Transaction by ID → Detail transaction
+```
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - API Gateway</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .login-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 1.5rem;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #555;
-        }
-        input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 0.75rem;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background: #5568d3;
-        }
-        .error {
-            color: red;
-            text-align: center;
-            margin-top: 1rem;
-        }
-        .success {
-            color: green;
-            text-align: center;
-            margin-top: 1rem;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <h2>Login</h2>
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-            <div id="message"></div>
-        </form>
-    </div>
+**Step 7: Test RBAC (Role-Based Access)**
+```bash
+17. POST Login as User (Read-Only)
+    → Credential: rizky / user123
+18. Try GET requests → Should succeed ✅
+19. Try POST/PUT/DELETE → Should fail with 403 Forbidden ❌
+```
+### 🧪 Testing dengan Dashboard
+```bash
+# Start dashboard
+cd dashboard
+python -m http.server 8080
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const messageDiv = document.getElementById('message');
+# Test flow
+1. Login sebagai admin
+2. Click "Fetch All Users"
+3. Click "Create New Restaurant"
+4. Click "Create New Order" → otomatis trigger payment
+5. Lihat metrics update real-time
+```
 
-            try {
-                const response = await fetch('http://localhost:3000/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password })
-                });
+### 🧪 Testing dengan cURL
+```bash
+# Login
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
 
-                const data = await response.json();
+# Save token dari response, lalu:
+TOKEN="your-jwt-token-here"
 
-                if (data.success) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    messageDiv.className = 'success';
-                    messageDiv.textContent = 'Login successful! Redirecting...';
-                    
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1000);
-                } else {
-                    messageDiv.className = 'error';
-                    messageDiv.textContent = data.error || 'Login failed';
-                }
-            } catch (error) {
-                messageDiv.className = 'error';
-                messageDiv.textContent = 'Connection error. Please try again.';
-            }
-        });
-    </script>
-</body>
-</html>
+# Get users
+curl http://localhost:3000/api/user/users/ \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ---
 
-## 9. Dokumentasi API
+## 📊 Database Schema
 
-### Opsi 1: Dokumentasi dengan Swagger/OpenAPI
-
-#### Contoh Konfigurasi Swagger dengan Node.js
-
-```javascript
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-
-const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'User Service API',
-      version: '1.0.0',
-      description: 'API documentation for User Service',
-    },
-    servers: [
-      {
-        url: 'http://localhost:3001',
-        description: 'Development server',
-      },
-    ],
-  },
-  apis: ['./src/routes/*.js'], // Path to the API docs
-};
-
-const specs = swaggerJsdoc(options);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+### users_db
+```sql
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
-#### Contoh Dokumentasi Endpoint
+### restaurants_db
+```sql
+CREATE TABLE restaurants (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-```javascript
-/**
- * @swagger
- * /users:
- *   get:
- *     summary: Retrieve a list of users
- *     description: Retrieve a list of all users from the database
- *     responses:
- *       200:
- *         description: A list of users
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                     description: The user ID
- *                   name:
- *                     type: string
- *                     description: The user name
- *                   email:
- *                     type: string
- *                     description: The user email
- */
+CREATE TABLE menu_items (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    restaurant_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
+);
 ```
 
-### Opsi 2: Dokumentasi dengan Postman
+### orders_db
+```sql
+CREATE TABLE orders (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    restaurant_id INT NOT NULL,
+    total_price DECIMAL(10,2) NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 
-#### Membuat Koleksi Postman
-
-1. **Install Postman Desktop** atau gunakan versi web
-2. **Buat Workspace baru** untuk proyek Anda
-3. **Create Collection** untuk setiap service
-
-#### Struktur Koleksi Postman
-
-```
-UTS EAI Project Workspace
-├── User Service Collection
-│   ├── GET /users
-│   ├── GET /users/{id}
-│   ├── POST /users
-│   ├── PUT /users/{id}
-│   └── DELETE /users/{id}
-├── Payment Service Collection
-│   ├── GET /transactions
-│   ├── GET /transactions/{id}
-│   ├── POST /transactions
-│   └── PUT /transactions/{id}
-└── API Gateway Collection
-    ├── GET /api/user-service/users
-    ├── POST /api/payment-service/transactions
-    └── GET /health
+CREATE TABLE order_items (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    order_id INT NOT NULL,
+    menu_item_id INT NOT NULL,
+    quantity INT NOT NULL,
+    price_at_time DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
 ```
 
-#### Contoh Konfigurasi Request di Postman
+### payments_db
+```sql
+CREATE TABLE transactions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    order_id INT NOT NULL UNIQUE,
+    amount DECIMAL(10,2) NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
 
-**GET /users Request:**
+---
 
-```json
+## 🔐 Security Features
+
+1. **JWT Authentication**: Token-based auth dengan expiry (24h access, 7d refresh)
+2. **Role-Based Access Control (RBAC)**: Admin vs User permissions
+3. **Password Hashing**: Bcrypt untuk semua password (cost factor 10)
+4. **CORS Protection**: Configured di API Gateway untuk semua origins
+5. **Input Validation**: Request validation di setiap service endpoint
+6. **SQL Injection Prevention**: SQLAlchemy ORM dengan parameterized queries
+7. **Error Handling**: Consistent error response format dengan status codes
+8. **Service Isolation**: Setiap service punya database sendiri (database per service pattern)
+
+---
+
+## 🐛 Troubleshooting
+
+### Services Tidak Start?
+
+**Masalah:** Container exit atau restart terus-menerus
+
+```bash
+# Cek logs error
+docker-compose logs -f [service-name]
+
+# Contoh: cek order-service
+docker-compose logs -f order-service
+
+# Cari error seperti:
+# - "Database connection error"
+# - "Port already in use"
+# - "Module not found"
+```
+
+**Solusi:**
+```bash
+# Restart service tertentu
+docker-compose restart order-service
+
+# Full reset (HATI-HATI: hapus semua data!)
+docker-compose down -v
+docker-compose up -d --build
+```
+
+---
+
+### JWT Token Expired?
+
+**Masalah:** Error 403 "Invalid or expired token"
+
+**Solusi:**
+```bash
+# Access token expire 24 jam
+# Re-login untuk token baru
+POST /auth/login
+
+# Atau gunakan refresh token
+POST /auth/refresh
+Header: Authorization: Bearer {refresh_token}
+```
+
+---
+
+### Port Conflict?
+
+**Masalah:** Error "Port already in use"
+
+**Solusi:**
+```bash
+# Ganti port di docker-compose.yml
+ports:
+  - "3010:3000"  # Ganti 3010 dengan port lain yang tersedia
+  
+# Atau hentikan aplikasi yang pakai port tersebut
+# Windows:
+netstat -ano | findstr :3000
+taskkill /PID [PID_NUMBER] /F
+
+# Linux/Mac:
+lsof -i :3000
+kill -9 [PID]
+```
+
+---
+
+### MySQL Connection Refused?
+
+**Masalah:** Service tidak bisa connect ke database
+
+**Solusi:**
+```bash
+# Tunggu MySQL health check selesai (30-60 detik pertama kali)
+docker-compose logs mysql-db | grep "ready for connections"
+
+# Jika masih gagal, restart services
+docker-compose restart user-service restaurant-service order-service payment-service
+
+# Cek MySQL container
+docker-compose exec mysql-db mysql -u root -e "SHOW DATABASES;"
+```
+
+---
+
+### Error 404 Not Found?
+
+**Masalah:** POST Create Order gagal dengan "User not found" atau "Transaction not found"
+
+**Root Cause:** ID yang digunakan tidak ada di database
+
+**Solusi:**
+```bash
+# SELALU cek data yang ada dulu sebelum POST
+
+# 1. Cek user ID yang ada
+GET /api/user/users/
+
+# 2. Cek restaurant ID yang ada
+GET /api/restaurant/restaurants/
+
+# 3. Cek menu item ID yang ada
+GET /api/restaurant/restaurants/1/menu
+
+# 4. Pakai ID yang BENAR ada di response GET
+POST /api/order/orders/
 {
-  "info": {
-    "name": "Get All Users",
-    "description": "Retrieve a list of all users"
-  },
-  "request": {
-    "method": "GET",
-    "header": [],
-    "url": {
-      "raw": "http://localhost:3001/users",
-      "protocol": "http",
-      "host": ["localhost"],
-      "port": "3001",
-      "path": ["users"]
-    }
-  },
-  "response": []
-}
-```
-
-**POST /users Request:**
-
-```json
-{
-  "info": {
-    "name": "Create User",
-    "description": "Create a new user"
-  },
-  "request": {
-    "method": "POST",
-    "header": [
-      {
-        "key": "Content-Type",
-        "value": "application/json"
-      }
-    ],
-    "body": {
-      "mode": "raw",
-      "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
-    },
-    "url": {
-      "raw": "http://localhost:3001/users",
-      "protocol": "http",
-      "host": ["localhost"],
-      "port": "3001",
-      "path": ["users"]
-    }
-  }
-}
-```
-
-#### Environment Variables di Postman
-
-1. **Create Environment** untuk development dan production
-2. **Set variables** untuk base URL dan konfigurasi lainnya
-
-```json
-{
-  "name": "Development Environment",
-  "values": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:3000",
-      "enabled": true
-    },
-    {
-      "key": "user_service_url",
-      "value": "http://localhost:3001",
-      "enabled": true
-    },
-    {
-      "key": "payment_service_url",
-      "value": "http://localhost:3002",
-      "enabled": true
-    },
-    {
-      "key": "api_key",
-      "value": "your-api-key-here",
-      "enabled": true
-    }
-  ]
-}
-```
-
-#### Menggunakan Variables di Request
-
-```json
-{
-  "request": {
-    "method": "GET",
-    "header": [
-      {
-        "key": "X-API-Key",
-        "value": "{{api_key}}"
-      }
-    ],
-    "url": {
-      "raw": "{{user_service_url}}/users",
-      "host": ["{{user_service_url}}"],
-      "path": ["users"]
-    }
-  }
-}
-```
-
-#### Automated Testing dengan Postman
-
-**Test Script untuk GET /users:**
-
-```javascript
-pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
-});
-
-pm.test("Response has users array", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('data');
-    pm.expect(jsonData.data).to.be.an('array');
-});
-
-pm.test("Each user has required fields", function () {
-    const jsonData = pm.response.json();
-    jsonData.data.forEach(user => {
-        pm.expect(user).to.have.property('id');
-        pm.expect(user).to.have.property('name');
-        pm.expect(user).to.have.property('email');
-    });
-});
-```
-
-**Pre-request Script untuk Authentication:**
-
-```javascript
-// Generate token if needed
-if (!pm.environment.get("auth_token")) {
-    const loginRequest = {
-        url: pm.environment.get("base_url") + "/auth/login",
-        method: "POST",
-        header: "Content-Type: application/json",
-        body: {
-            mode: "raw",
-            raw: JSON.stringify({
-                email: "test@example.com",
-                password: "password123"
-            })
-        }
-    };
-    
-    pm.sendRequest(loginRequest, function (err, res) {
-        if (err) {
-            console.log(err);
-        } else {
-            const token = res.json().token;
-            pm.environment.set("auth_token", token);
-        }
-    });
-}
-```
-
-#### Export dan Share Koleksi Postman
-
-1. **Export Collection**: Klik kanan pada collection → Export
-2. **Pilih format**: JSON v2.1 (recommended)
-3. **Share dengan tim**:
-   - Generate share link
-   - Invite team members ke workspace
-   - Export dan kirim file JSON
-
-#### Dokumentasi yang Harus Dikumpulkan
-
-**Untuk Postman:**
-
-- File export collection (.json)
-- File export environment (.json)
-- Screenshot dari Postman workspace
-- Dokumentasi endpoint dalam bentuk README.md
-
-**Format README.md untuk Postman Collection:**
-
-```markdown
-# API Documentation - User Service
-
-## Base URL
-
-http://localhost:3001
-
-## Authentication
-
-Tambahkan header `X-API-Key: your-api-key` untuk semua request.
-
-## Endpoints
-
-### Get All Users
-
-- **Method**: GET
-- **URL**: `/users`
-- **Description**: Retrieve a list of all users
-- **Response Example**:
-
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "name": "John Doe",
-      "email": "john@example.com",
-      "created_at": "2023-12-01T10:30:00Z"
-    }
-  ]
-}
-
-### Create User
-
-- **Method**: POST
-- **URL**: `/users`
-- **Headers**: `Content-Type: application/json`
-- **Body**:
-
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123"
-}
-
-- **Response Example**:
-
-{
-  "success": true,
-  "data": {
-    "id": 2,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "created_at": "2023-12-01T10:30:00Z"
-  }
+    "user_id": 1,          ← ID yang BENAR ada
+    "restaurant_id": 1,
+    "items": [{"menu_item_id": 1, "quantity": 2}]
 }
 ```
 
 ---
 
-## 10. Output yang Diharapkan
+### Error 500 Internal Server Error?
 
-1. **Aplikasi API berjalan dan bisa saling berkomunikasi.**
-2. **Dokumentasi API lengkap (Swagger/OpenAPI ATAU Postman).**
-3. **File dokumentasi (.json/.yaml untuk OpenAPI atau .json untuk Postman) disertakan.**
-4. **Frontend sederhana yang dapat mengkonsumsi API Gateway.**
-5. **Source code lengkap dengan dokumentasi setup dan running.**
+**Masalah:** Backend service crash atau error
 
----
+**Solusi:**
+```bash
+# Lihat logs untuk detail error
+docker-compose logs -f order-service
 
-## 11. Waktu Pengerjaan
+# Cari error seperti:
+# - KeyError: 'user_id'
+# - Database connection error
+# - Service communication failed
 
-- **Diberikan selama 2 minggu**
-- **Presentasi & demo sistem dilakukan saat minggu UTS.**
-
----
-
-## 12. Kriteria Penilaian
-
-| Komponen | Bobot |
-|----------|-------|
-| Arsitektur layanan dan komunikasi API | 30% |
-| Fungsionalitas sistem (berjalan dengan baik) | 25% |
-| Dokumentasi API (Swagger) | 20% |
-| Presentasi & pemahaman konsep | 25% |
+# Restart service
+docker-compose restart order-service
+```
 
 ---
 
-## 13. Rubrikasi Penilaian
+### Error 504 Gateway Timeout?
 
-| Komponen Penilaian | Bobot | Level Rendah (Low) | Level Sedang (Medium) | Level Tinggi (High) |
-|--------------------|-------|---------------------|----------------------|---------------------|
-| **1. Arsitektur Layanan dan Komunikasi API** | 30% | Hanya terdapat 2 layanan sederhana, belum ada komunikasi antar layanan atau API masih bersifat statis. | Terdapat dua layanan yang saling berkomunikasi melalui API, tetapi masih ada kendala dalam alur integrasi atau struktur arsitektur belum sepenuhnya jelas. | Arsitektur sistem terstruktur dan jelas, terdapat lebih dari dua layanan saling berkomunikasi secara dinamis melalui API (GET, POST, PUT, DELETE) dengan integrasi lancar. |
-| **2. Fungsionalitas Sistem (Berjalan dengan Baik)** | 25% | Aplikasi belum berjalan penuh; hanya sebagian fitur yang bisa digunakan atau sering error. | Sebagian besar fitur dapat dijalankan dengan baik, meski masih terdapat bug minor. | Semua fitur berfungsi dengan baik, sistem stabil, dan respons cepat tanpa error saat pengujian API. |
-| **3. Dokumentasi API (Swagger/Postman)** | 20% | Dokumentasi API belum lengkap, hanya menampilkan sebagian endpoint tanpa deskripsi parameter dan respons. | Dokumentasi API menampilkan sebagian besar endpoint, sudah ada contoh input/output tapi belum konsisten. | Dokumentasi API lengkap dan rapi, mencakup semua endpoint, parameter, contoh request/response, serta mudah dipahami oleh pengguna. |
-| **4. Presentasi & Pemahaman Konsep** | 25% | Kurang mampu menjelaskan konsep integrasi API dan Swagger; penyampaian tidak runtut. | Dapat menjelaskan sebagian konsep dan alur kerja API, namun masih kurang mendalam atau ada bagian yang belum dikuasai. | Menjelaskan konsep API, arsitektur layanan, dan Swagger dengan jelas, runtut, serta mampu menjawab pertanyaan dengan baik. |
+**Masalah:** API Gateway tidak bisa connect ke backend service
+
+**Solusi:**
+```bash
+# Cek service running
+docker-compose ps
+
+# Pastikan service target UP
+# Jika Exit atau Restarting → ada masalah
+
+# Cek logs service yang error
+docker-compose logs restaurant-service
+
+# Restart service
+docker-compose restart restaurant-service
+```
 
 ---
 
-## 14. Konversi Nilai
+### Cannot Delete Paid Order/Payment?
 
-| Level | Keterangan | Rentang Nilai |
-|-------|------------|---------------|
-| **Low** | Implementasi dasar, masih banyak kekurangan. | **< 75** |
-| **Medium** | Cukup baik, memenuhi sebagian besar kriteria. | **75 – 80** |
-| **High** | Lengkap, rapi, dan menunjukkan pemahaman kuat. | **81 – 100** |
+**Masalah:** Error "Cannot delete a paid order"
+
+**Root Cause:** By design untuk data integrity
+
+**Solusi:**
+```bash
+# Jangan DELETE order/payment yang sudah PAID
+# Gunakan PUT untuk update status
+
+PUT /api/order/orders/{id}
+{
+    "status": "CANCELLED"
+}
+
+# Atau
+{
+    "status": "REFUNDED"
+}
+```
+
+## 📸 Bukti Pengujian
+
+Dokumentasi visual untuk membuktikan semua fitur berjalan dengan baik. Simpan screenshot di folder `docs/screenshots/`.
+### 1️⃣ Swagger UI 
+#### UI
+![Login Success](<docs/screenshots/swagger/Login Success.jpeg>)
+![Login Failed](<docs/screenshots/swagger/Login Failed.jpeg>)
+![Api Actions](<docs/screenshots/swagger/Api Actions.jpeg>)
+![User Profile.jpeg](<docs/screenshots/swagger/User Profile.jpeg>)
 
 ---
 
-## 15. Contoh Implementasi Lengkap dengan Flask dan SQLite
-
-### Struktur Proyek Flask Service
+## 📦 Struktur Project
 
 ```
-user-service/
-├── app.py                    # Main application file
-├── models.py                  # Database models
-├── config.py                  # Configuration
-├── requirements.txt           # Python dependencies
-├── .env                      # Environment variables
-├── database.db               # SQLite database file
-├── templates/                # HTML templates (jika needed)
+food-delivery-microservices/
+├── api-gateway/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── .env
+│   └── index.js
+├── user-service/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── .env
+│   ├── app.py
+│   ├── models.py
+│   ├── config.py
+│   └── gunicorn.conf.py
+├── restaurant-service/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── .env
+│   ├── app.py
+│   ├── models.py
+│   └── config.py
+├── order-service/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── .env
+│   ├── app.py
+│   ├── models.py
+│   ├── config.py
+│   └── gunicorn.conf.py
+├── payment-service/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── .env
+│   ├── app.py
+│   ├── models.py
+│   └── config.py
+├── dashboard/
+│   ├── login.html
+│   ├── dashboard.html
+│   └── js/
+│       ├── auth.js
+│       └── app.js
+├── docs/
+│   └── screenshots/
+│       ├── swagger/
+│       ├── postman/
+│       └── health-check/
+├── docker-compose.yml
+├── init-db.sql
+├── uts-iae-collection-full-crud.json
+├── uts-iae-environment.json
 └── README.md
 ```
 
-### config.py
+---
 
-```python
-import os
-from dotenv import load_dotenv
+## 🔗 Quick Links
 
-load_dotenv()
+### API Documentation
+- **User Service Swagger**: http://localhost:3001/api-docs/
+- **Restaurant Service Swagger**: http://localhost:3002/api-docs/
+- **Order Service Swagger**: http://localhost:3003/api-docs/
+- **Payment Service Swagger**: http://localhost:3004/api-docs/
 
-class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///database.db')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    PORT = int(os.getenv('PORT', 3001))
-    SERVICE_NAME = os.getenv('SERVICE_NAME', 'user-service')
-```
+### Health Check
+- **API Gateway**: http://localhost:3000/health
+- **User Service**: http://localhost:3001/health
+- **Restaurant Service**: http://localhost:3002/health
+- **Order Service**: http://localhost:3003/health
+- **Payment Service**: http://localhost:3004/health
 
-### models.py
+### Postman Collection
+- Import file: `uts-iae-collection-full-crud.json`
+- Import environment: `uts-iae-environment.json`
 
-```python
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+---
 
-db = SQLAlchemy()
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    balance = db.Column(db.Float, default=0.0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'email': self.email,
-            'balance': self.balance,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
-        }
-    
-    def __repr__(self):
-        return f'<User {self.name}>'
+## 📞 Support & Contact
 
-class Transaction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-    type = db.Column(db.String(20), nullable=False)  # 'credit' or 'debit'
-    description = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'amount': self.amount,
-            'type': self.type,
-            'description': self.description,
-            'created_at': self.created_at.isoformat()
-        }
-```
+### Jika Mengalami Kendala:
 
-### app.py
+1. ✅ Cek section **Troubleshooting** di atas
+2. 📋 Lihat logs: `docker-compose logs -f [service-name]`
+3. 🔍 Pastikan environment variables sudah benar
+4. 🆘 Konsultasi dengan dosen pengampu
 
-```python
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from flask_restx import Api, Resource, fields
-from models import db, User, Transaction
-from config import Config
-import requests
-import os
+### Submission Checklist:
 
-app = Flask(__name__)
-app.config.from_object(Config)
+- [ ] Source code lengkap (semua folder service + dashboard)
+- [ ] `docker-compose.yml` bisa dijalankan langsung
+- [ ] `README.md` lengkap dengan cara setup
+- [ ] Postman collection (`uts-iae-collection-full-crud.json`)
+- [ ] Screenshot bukti pengujian (folder `docs/screenshots/`)
+- [ ] Presentasi slides (overview arsitektur + demo)
 
-# Initialize extensions
-db.init_app(app)
-CORS(app)
+---
 
-# Initialize API documentation
-api = Api(app, doc='/api-docs/', version='1.0',
-          title='User Service API',
-          description='API documentation for User Service')
+## 📄 License & Credits
 
-# Define data models for documentation
-user_model = api.model('User', {
-    'id': fields.Integer(description='User ID'),
-    'name': fields.String(description='User name'),
-    'email': fields.String(description='User email'),
-    'balance': fields.Float(description='User balance'),
-    'created_at': fields.DateTime(description='Creation timestamp')
-})
+**Proyek:** Food Delivery Microservices System  
+**Mata Kuliah:** Integrasi Aplikasi Enterprise (IAE/EAI)  
+**Institusi:** [Nama Universitas]  
+**Semester:** [Semester & Tahun Akademik]  
+**Dosen Pengampu:** [Nama Dosen]
 
-user_input = api.model('UserInput', {
-    'name': fields.String(required=True, description='User name'),
-    'email': fields.String(required=True, description='User email'),
-    'password': fields.String(required=True, description='User password')
-})
+**Tim Pengembang:**
+- Alvina Sulistina (102022300102) - Technical Writer
+- Mochamad Rizky Maulana Aviansyah (102022300021) - Full Stack Developer
+- Bimo Alfarizy Lukman (102022330069) - QA Engineer
+- Revaldo A. Nainggolan (102022330325) - Backend Architect
 
-transaction_model = api.model('Transaction', {
-    'id': fields.Integer(description='Transaction ID'),
-    'user_id': fields.Integer(description='User ID'),
-    'amount': fields.Float(description='Transaction amount'),
-    'type': fields.String(description='Transaction type'),
-    'description': fields.String(description='Transaction description'),
-    'created_at': fields.DateTime(description='Creation timestamp')
-})
+---
 
-# Define namespaces
-users_ns = api.namespace('users', description='User operations')
-transactions_ns = api.namespace('transactions', description='Transaction operations')
+**🚀 Happy Coding & Good Luck with UTS!**
 
-@users_ns.route('/')
-class UserList(Resource):
-    @users_ns.doc('list_users')
-    @users_ns.marshal_list_with(user_model)
-    def get(self):
-        """Get all users"""
-        users = User.query.all()
-        return [user.to_dict() for user in users]
-    
-    @users_ns.doc('create_user')
-    @users_ns.expect(user_input)
-    @users_ns.marshal_with(user_model, code=201)
-    def post(self):
-        """Create a new user"""
-        data = request.get_json()
-        
-        # Check if user already exists
-        if User.query.filter_by(email=data['email']).first():
-            return {'error': 'Email already exists'}, 400
-        
-        # Create new user
-        user = User(
-            name=data['name'],
-            email=data['email'],
-            password=data['password']  # In production, hash this password
-        )
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        return user.to_dict(), 201
+Made with ❤️ by Team Food Delivery Microservices
 
-@users_ns.route('/<int:id>')
-@users_ns.response(404, 'User not found')
-@users_ns.param('id', 'The user identifier')
-class UserResource(Resource):
-    @users_ns.doc('get_user')
-    @users_ns.marshal_with(user_model)
-    def get(self, id):
-        """Get user by ID"""
-        user = User.query.get(id)
-        if not user:
-            return {'error': 'User not found'}, 404
-        return user.to_dict()
-    
-    @users_ns.doc('delete_user')
-    @users_ns.response(204, 'User deleted')
-    def delete(self, id):
-        """Delete user by ID"""
-        user = User.query.get(id)
-        if not user:
-            return {'error': 'User not found'}, 404
-        
-        db.session.delete(user)
-        db.session.commit()
-        return '', 204
+---
 
-@transactions_ns.route('/')
-class TransactionList(Resource):
-    @transactions_ns.doc('list_transactions')
-    @transactions_ns.marshal_list_with(transaction_model)
-    def get(self):
-        """Get all transactions"""
-        transactions = Transaction.query.all()
-        return [transaction.to_dict() for transaction in transactions]
-    
-    @transactions_ns.doc('create_transaction')
-    @transactions_ns.expect(transaction_model)
-    @transactions_ns.marshal_with(transaction_model, code=201)
-    def post(self):
-        """Create a new transaction"""
-        data = request.get_json()
-        
-        # Verify user exists
-        user = User.query.get(data['user_id'])
-        if not user:
-            return {'error': 'User not found'}, 404
-        
-        # Create transaction
-        transaction = Transaction(
-            user_id=data['user_id'],
-            amount=data['amount'],
-            type=data['type'],
-            description=data.get('description', '')
-        )
-        
-        # Update user balance
-        if data['type'] == 'credit':
-            user.balance += data['amount']
-        elif data['type'] == 'debit':
-            if user.balance < data['amount']:
-                return {'error': 'Insufficient balance'}, 400
-            user.balance -= data['amount']
-        
-        db.session.add(transaction)
-        db.session.commit()
-        
-        return transaction.to_dict(), 201
+## Appendix: Command Reference
 
-# Internal endpoints for service communication
-@app.route('/internal/users/<int:user_id>')
-def get_user_internal(user_id):
-    """Internal endpoint for other services"""
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    return jsonify(user.to_dict())
-
-@app.route('/internal/users/<int:user_id>/balance', methods=['PUT'])
-def update_user_balance(user_id):
-    """Internal endpoint to update user balance"""
-    data = request.get_json()
-    user = User.query.get(user_id)
-    
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    
-    amount = data.get('amount', 0)
-    if data.get('type') == 'credit':
-        user.balance += amount
-    elif data.get('type') == 'debit':
-        if user.balance < amount:
-            return jsonify({'error': 'Insufficient balance'}), 400
-        user.balance -= amount
-    
-    db.session.commit()
-    return jsonify(user.to_dict())
-
-# Health check
-@app.route('/health')
-def health_check():
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': '2023-12-01T10:30:00Z',
-        'service': os.getenv('SERVICE_NAME', 'user-service'),
-        'database': 'connected' if db.engine else 'disconnected'
-    })
-
-# Create database tables
-@app.before_first_request
-def create_tables():
-    db.create_all()
-
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    port = Config.PORT
-    app.run(host='0.0.0.0', port=port, debug=True)
-```
-
-### requirements.txt
-
-```
-Flask==2.3.2
-Flask-SQLAlchemy==3.0.5
-Flask-CORS==4.0.0
-Flask-RESTX==1.1.0
-python-dotenv==1.0.0
-requests==2.31.0
-```
-
-### .env
-
+### Docker Commands
 ```bash
-SECRET_KEY=your-secret-key-here
-DATABASE_URL=sqlite:///database.db
-PORT=3001
-SERVICE_NAME=user-service
+# Start all services
+docker-compose up -d
+
+# Stop all services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Restart specific service
+docker-compose restart [service-name]
+
+# Rebuild and restart
+docker-compose up -d --build
+
+# Remove all data (CAUTION!)
+docker-compose down -v
 ```
 
-### Cara Menjalankan Service
-
+### Testing Commands
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Test health check
+curl http://localhost:3000/health
 
-# Set environment variables
-set FLASK_APP=app.py
-set FLASK_ENV=development
+# Test login
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
 
-# Run the application
-python app.py
+# Test with authentication
+curl http://localhost:3000/api/user/users/ \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
----
-
-## 16. Panduan Setup dan Deployment
-
-### Struktur Direktori Proyek
-
-```
-project-uts-eai/
-├── api-gateway/               # API Gateway
-│   ├── src/
-│   ├── package.json
-│   └── README.md
-├── service-1/                 # Service 1 (misal: User Service)
-│   ├── src/
-│   ├── docs/
-│   ├── requirements.txt
-│   ├── database.db
-│   └── README.md
-├── service-2/                 # Service 2 (misal: Payment Service)
-│   ├── src/
-│   ├── docs/
-│   ├── requirements.txt
-│   ├── database.db
-│   └── README.md
-├── service-3/                 # Service 3 (jika jumlah anggota > 2)
-│   ├── src/
-│   ├── docs/
-│   ├── requirements.txt
-│   ├── database.db
-│   └── README.md
-├── service-4/                 # Service 4 (jika jumlah anggota > 3)
-│   ├── src/
-│   ├── docs/
-│   ├── requirements.txt
-│   ├── database.db
-│   └── README.md
-├── frontend/                  # Frontend sederhana
-│   ├── index.html
-│   ├── css/
-│   ├── js/
-│   └── README.md
-├── docs/                      # Dokumentasi umum
-│   ├── api-documentation/
-│   └── architecture/
-├── scripts/                   # Helper scripts
-│   ├── start-all.sh
-│   └── stop-all.sh
-├── docker-compose.yml         # Docker composition (opsional)
-└── README.md                  # Dokumentasi utama proyek
-```
-
-### Environment Variables
-
+### Database Commands
 ```bash
-# API Gateway
-PORT=3000
+# Access MySQL container
+docker-compose exec mysql-db mysql -u root
 
-# Service 1
-SERVICE1_PORT=3001
-SERVICE1_NAME=user-service
+# Show databases
+SHOW DATABASES;
 
-# Service 2
-SERVICE2_PORT=3002
-SERVICE2_NAME=payment-service
+# Use specific database
+USE users_db;
 
-# Service 3 (jika ada)
-SERVICE3_PORT=3003
-SERVICE3_NAME=patient-service
+# Show tables
+SHOW TABLES;
 
-# Service 4 (jika ada)
-SERVICE4_PORT=3004
-SERVICE4_NAME=medical-record-service
-
-# Database Options
-# Untuk SQLite
-DATABASE_URL=sqlite:///database.db
-
-# Untuk MySQL
-DATABASE_URL=mysql://username:password@localhost:3306/database_name
-
-# Untuk PostgreSQL
-DATABASE_URL=postgresql://username:password@localhost:5432/database_name
-
-# Untuk MongoDB
-DATABASE_URL=mongodb://localhost:27017/database_name
-```
-
-### Helper Scripts
-
-#### start-all.bat (Windows)
-
-```batch
-@echo off
-echo Starting all services...
-
-:: Start API Gateway
-cd api-gateway
-start cmd /k "npm run dev"
-cd ..
-
-:: Start Service 1
-cd service-1
-start cmd /k "npm run dev"
-cd ..
-
-:: Start Service 2
-cd service-2
-start cmd /k "npm run dev"
-cd ..
-
-:: Start Service 3 (jika ada)
-if exist "service-3" (
-    cd service-3
-    start cmd /k "npm run dev"
-    cd ..
-)
-
-:: Start Service 4 (jika ada)
-if exist "service-4" (
-    cd service-4
-    start cmd /k "npm run dev"
-    cd ..
-)
-
-echo All services started!
-echo API Gateway: http://localhost:3000
-echo Service 1: http://localhost:3001
-echo Service 2: http://localhost:3002
-pause
-```
-
-#### start-all.sh (Linux/Mac)
-
-```bash
-#!/bin/bash
-
-echo "Starting all services..."
-
-# Start API Gateway
-cd api-gateway
-npm run dev &
-GATEWAY_PID=$!
-cd ..
-
-# Start Service 1
-cd service-1
-npm run dev &
-SERVICE1_PID=$!
-cd ..
-
-# Start Service 2
-cd service-2
-npm run dev &
-SERVICE2_PID=$!
-cd ..
-
-# Start Service 3 (jika ada)
-if [ -d "service-3" ]; then
-    cd service-3
-    npm run dev &
-    SERVICE3_PID=$!
-    cd ..
-fi
-
-# Start Service 4 (jika ada)
-if [ -d "service-4" ]; then
-    cd service-4
-    npm run dev &
-    SERVICE4_PID=$!
-    cd ..
-fi
-
-echo "All services started!"
-echo "API Gateway: http://localhost:3000"
-echo "Service 1: http://localhost:3001"
-echo "Service 2: http://localhost:3002"
-
-# Wait for user input to stop
-read -p "Press Enter to stop all services..."
-
-# Kill all processes
-kill $GATEWAY_PID $SERVICE1_PID $SERVICE2_PID
-if [ ! -z "$SERVICE3_PID" ]; then
-    kill $SERVICE3_PID
-fi
-if [ ! -z "$SERVICE4_PID" ]; then
-    kill $SERVICE4_PID
-fi
-
-echo "All services stopped."
+# Query users
+SELECT * FROM users;
 ```
 
 ---
 
-## 17. Best Practices
-
-### API Design
-
-- Gunakan HTTP methods yang sesuai (GET, POST, PUT, DELETE)
-- Implementasikan status code HTTP yang tepat
-- Gunakan naming convention yang konsisten
-- Implementasikan pagination untuk data yang besar
-
-### Error Handling
-
-- Gunakan format error response yang konsisten
-- Implementasikan logging untuk debugging
-- Berikan pesan error yang informatif
-
-### Security
-
-- Validasi input data
-- Implementasikan rate limiting
-- Gunakan HTTPS untuk production
-- Jangan expose sensitive information
-
-### Documentation
-
-- Dokumentasikan semua endpoint
-- Berikan contoh request dan response
-- Jelaskan parameter yang diperlukan
-- Update dokumentasi secara berkala
-
----
-
-## 18. Resources Tambahan
-
-### API Documentation Tools
-
-- [Swagger/OpenAPI](https://swagger.io/) - Documentation framework
-- [Postman](https://www.postman.com/) - API testing and documentation
-- [Insomnia](https://insomnia.rest/) - REST client
-
-### Development Tools
-
-- [Git](https://git-scm.com/) - Version control
-- [Docker](https://www.docker.com/) - Containerization (opsional)
-- [VS Code](https://code.visualstudio.com/) - Code editor
-
-### Learning Resources
-
-- [REST API Design Best Practices](https://restfulapi.net/)
-- [Microservices Patterns](https://microservices.io/patterns/)
-- [OpenAPI Specification](https://swagger.io/specification/)
-
----
-
-## 19. FAQ
-
-**Q: Apakah kita harus menggunakan database?**
-
-A: Ya, salah satu database (MySQL/MongoDB/PostgreSQL) harus digunakan sesuai spesifikasi teknis.
-
-**Q: Apakah API Gateway wajib digunakan?**
-
-A: Ya, API Gateway wajib digunakan sebagai pintu masuk komunikasi antar layanan.
-
-**Q: Berapa jumlah minimal layanan yang harus dibuat?**
-
-A: Jumlah layanan minimal harus sama dengan jumlah anggota kelompok, dengan minimal 2 layanan.
-
-**Q: Apakah frontend harus kompleks?**
-
-A: Tidak, frontend yang sederhana (HTML + JS biasa atau React/Vue sederhana) sudah cukup.
-
-**Q: Bagaimana cara mengakses dokumentasi Swagger?**
-
-A: Dokumentasi Swagger harus dapat diakses melalui endpoint /api-docs pada setiap service.
-
----
-
-## 20. Kontak dan Support
-
-Jika Anda memiliki pertanyaan atau mengalami masalah selama pengerjaan proyek:
-
-1. Periksa dokumentasi yang tersedia
-2. Konsultasi dengan dosen pengampu
-
----
-
-**Catatan:** Deadline Sebelum perkuliahan pekan 9.
+**End of README.md**
