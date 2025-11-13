@@ -880,7 +880,7 @@ food-delivery-microservices/
 
 **🚀 Happy Coding & Good Luck with UTS!**
 
-Made with ❤️ by Team Food Delivery Microservices
+Made with ❤️ by KELOMPOK 6
 
 ---
 
