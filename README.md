@@ -815,7 +815,7 @@ food-delivery-microservices/
 │       ├── auth.js
 │       └── app.js
 ├── docs/
-│   └── Diagram/
+│   ├── Diagram/
 │   └── screenshots/
 │       ├── swagger/
 │       ├── postman/
