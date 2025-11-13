@@ -719,6 +719,45 @@ Dokumentasi visual untuk membuktikan semua fitur berjalan dengan baik. Simpan sc
 ![Api Actions](<docs/screenshots/swagger/Api Actions.jpeg>)
 ![User Profile.jpeg](<docs/screenshots/swagger/User Profile.jpeg>)
 
+#### Local Host 3001
+![Swagger 3001](<docs/screenshots/swagger/Swagger 3001.png>)
+![AUTH LOGIN](<docs/screenshots/swagger/Swagger 3001 - AUTH LOGIN.png>) 
+![AUTH REFRESH](<docs/screenshots/swagger/Swagger 3001 - AUTH REFRESH.png>) 
+![User Delete](<docs/screenshots/swagger/Swagger 3001 - User Delete.png>) 
+![User GET ALL](<docs/screenshots/swagger/Swagger 3001 - User GET ALL.png>) 
+![User GET by ID](<docs/screenshots/swagger/Swagger 3001 - User GET by ID.png>) 
+![User Post](<docs/screenshots/swagger/Swagger 3001 - User Post.png>) 
+![User Put](<docs/screenshots/swagger/Swagger 3001 - User Put.png>) 
+
+#### Local Host 3002
+![Swagger 3002](<docs/screenshots/swagger/Swagger 3002.png>) 
+![UPDATE Restaurant By ID](<docs/screenshots/swagger/Swagger 3002 - UPDATE Restaurant By ID.png>) 
+![UPDATE menu Item](<docs/screenshots/swagger/Swagger 3002 - UPDATE menu Item.png>) 
+![POST Create New Menu](<docs/screenshots/swagger/Swagger 3002 - POST Create New Menu.png>) 
+![POST create a new restaurant](<docs/screenshots/swagger/Swagger 3002 - POST create a new restaurant.png>) 
+![GET Spesific Menu](<docs/screenshots/swagger/Swagger 3002 - GET Spesific Menu.png>) 
+![GET Restaurant By Id](<docs/screenshots/swagger/Swagger 3002 - GET Restaurant By Id.png>) 
+![GET list all](<docs/screenshots/swagger/Swagger 3002 - GET list all.png>) 
+![GET ALL MENU.](<docs/screenshots/swagger/Swagger 3002 - GET ALL MENU.png>) 
+![DELETE Restaurant](<docs/screenshots/swagger/Swagger 3002 - DELETE Restaurant.png>) 
+![Delete Menu](<docs/screenshots/swagger/Swagger 3002 - Delete Menu.png>)
+
+#### Local Host 3003
+![Swagger 3003](<docs/screenshots/swagger/Swagger 3003.png>) 
+![Swagger 3003 - GET ORDER by ID](<docs/screenshots/swagger/Swagger 3003 - GET ORDER by ID.png>) 
+![Swagger 3003 - Delet](<docs/screenshots/swagger/Swagger 3003 - Delete.png>) 
+![PUT Update Order Satatus By ID](<docs/screenshots/swagger/Swagger 3003 - PUT Update Order Satatus By ID.png>) 
+![LIst All Orders](<docs/screenshots/swagger/Swagger 3003 - LIst All Orders.png>) 
+![POST CREATE new Order](<docs/screenshots/swagger/Swagger 3003 - POST CREATE new Order.png>)
+
+#### Local Host 3004
+![Swagger 3004](<docs/screenshots/swagger/Swagger 3004.png>) 
+![GET List all](<docs/screenshots/swagger/Swagger 3004 - GET List all.png>) 
+![GET Transaction by ID](<docs/screenshots/swagger/Swagger 3004 - GET Transaction by ID.png>) 
+![PUT Update](<docs/screenshots/swagger/Swagger 3004 - PUT Update.png>) 
+![Delete Payment](<docs/screenshots/swagger/Swagger 3004 - Delete Payment.png>) 
+![INTERNAL POST](<docs/screenshots/swagger/Swagger 3004 - INTERNAL POST.png>)
+
 ### 2️⃣ Postman Collection Testing
 
 #### Authentication
