@@ -133,14 +133,18 @@ class OrderList(Resource):
             }
             payment_res = requests.post(payment_url, json=payment_payload)
 
-            if payment_res.status_code == 200:
-                new_order.status = 'PAID'
-                db.session.commit()
-                return new_order.to_dict(), 201
-            else:
-                new_order.status = 'FAILED'
-                db.session.commit()
-                return {'error': payment_res.json().get('error', 'Payment failed')}, 400
+            try:
+                if payment_res.status_code == 200:
+                    new_order.status = 'PAID'
+                    db.session.commit()
+                    return new_order.to_dict(), 201
+                else:
+                    new_order.status = 'FAILED'
+                    db.session.commit()
+                    error_msg = payment_res.json().get('error', 'Payment failed')
+                    return {'error': error_msg}, 400
+            except requests.exceptions.JSONDecodeError:
+                return {'error': 'Failed to decode JSON response from payment service.', 'response_text': payment_res.text}, 502
 
         except requests.exceptions.RequestException as e:
             return jsonify({'error': f'Service communication error: {str(e)}'}), 500

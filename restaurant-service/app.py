@@ -42,7 +42,8 @@ api = Api(app, doc='/api-docs/', version='1.0',
 restaurant_model = api.model('Restaurant', {
     'id': fields.Integer,
     'name': fields.String,
-    'address': fields.String
+    'address': fields.String,
+    'is_active': fields.Boolean
 })
 menu_item_model = api.model('MenuItem', {
     'id': fields.Integer,
@@ -73,7 +74,11 @@ class RestaurantList(Resource):
     def post(self):
         """Create a new restaurant"""
         data = request.get_json()
-        r = Restaurant(name=data['name'], address=data['address'])
+        r = Restaurant(
+            name=data['name'],
+            address=data['address'],
+            is_active=data.get('is_active', True)
+        )
         db.session.add(r)
         db.session.commit()
         return r.to_dict(), 201
@@ -105,6 +110,8 @@ class RestaurantResource(Resource):
             restaurant.name = data['name']
         if 'address' in data:
             restaurant.address = data['address']
+        if 'is_active' in data:
+            restaurant.is_active = data['is_active']
 
         db.session.commit()
         return restaurant.to_dict()
@@ -227,7 +234,7 @@ if __name__ == '__main__':
             except requests.exceptions.RequestException as e:
                 print(f"Warning: Failed to connect to User Service: {str(e)}")
             
-            r1 = Restaurant(name='Pizza Zone', address='123 Main St')
+            r1 = Restaurant(name='Pizza Zone', address='123 Main St', is_active=True)
             db.session.add(r1)
             db.session.commit() 
 

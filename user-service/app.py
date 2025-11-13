@@ -272,7 +272,7 @@ def update_user_balance(user_id):
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    amount = data.get('amount', 0)
+    amount = float(data.get('amount', 0))
     if data.get('type') == 'credit':
         user.balance += amount
     elif data.get('type') == 'debit':

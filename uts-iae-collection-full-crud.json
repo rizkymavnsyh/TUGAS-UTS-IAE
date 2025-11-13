@@ -814,7 +814,7 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "// [FIX] Ambil 'id' dari response dan simpan sebagai 'order_id'",
+                                    "// Ambil 'id' dari response dan simpan sebagai 'order_id'",
                                     "pm.test(\"Status code is 201 (Created)\", function () {",
                                     "    pm.response.to.have.status(201);",
                                     "});",

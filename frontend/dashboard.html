@@ -4,17 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food Delivery Dashboard</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <!-- Bootstrap Icons (optional, but good for UI) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #ff5722;
-            --secondary-color: #3f51b5;
+            /* Palet warna baru berdasarkan gradient Anda */
+            --primary-gradient: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+            --primary-color: #74ebd5; /* Warna solid dari gradient (Turquoise) */
+            --secondary-color: #6c63ff; /* Warna solid sekunder (Ungu, dari tema login) */
+            
             --background-light: #f8f9fa;
             --background-dark: #e9ecef;
             --text-dark: #343a40;
@@ -32,12 +33,14 @@
         }
 
         .navbar {
-            background-color: var(--primary-color) !important;
+            /* DIUBAH: Menggunakan gradient untuk navbar */
+            background: var(--primary-gradient) !important;
             box-shadow: 0 2px 10px var(--shadow-medium);
         }
         .navbar-brand, .nav-link {
             color: white !important;
             font-weight: 500;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.1); /* Menambah keterbacaan di atas gradient */
         }
 
         .card {
@@ -54,7 +57,7 @@
             background-color: white;
             border-bottom: 1px solid var(--border-light);
             font-weight: 500;
-            color: var(--secondary-color);
+            color: var(--secondary-color); /* DIUBAH: Menggunakan warna sekunder baru */
         }
         .card-title {
             color: var(--text-dark);
@@ -67,25 +70,77 @@
             height: calc(100vh - 2rem);
             overflow-y: auto;
         }
-        .user-info h3 {
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-            color: var(--primary-color);
-        }
-        .user-info strong {
-            display: inline-block;
-            width: 80px;
-            color: var(--text-muted);
+
+        /* ==== PERBAIKAN TOTAL UNTUK USER PROFILE (BOLD, TERANG, MENARIK) ==== */
+        .user-info {
+            /* Latar belakang gradient yang kontras */
+            background: linear-gradient(135deg, #ACB6E5 0%, #74ebd5 100%); 
+            color: var(--text-dark);
+            border-radius: 0.75rem;
         }
 
+        .user-info h3 {
+            /* Judul kartu juga dibuat putih/terang */
+            border-bottom: 2px solid white;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: white; /* Judul dibuat putih */
+            font-weight: 700;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .user-info strong {
+            display: inline-block;
+            width: 100px; /* Diperlebar agar sejajar */
+            color: var(--secondary-color); /* DIUBAH: Label menjadi UNGU GELAP (Kontras Kuat) */
+            font-weight: 700; /* Dibuat sangat tebal */
+            text-shadow: none; /* Dihapus agar lebih tajam */
+        }
+        
+        .user-info span {
+            font-weight: 700; /* Nilai data dibuat sangat tebal */
+            color: white; /* Nilai data tetap putih solid */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4); /* Meningkatkan shadow agar lebih kontras */
+            padding: 2px 0px;
+        }
+
+        .user-info .card-text {
+            padding: 8px 0;
+            margin-bottom: 0;
+            /* Garis pemisah putus-putus berwarna terang */
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.7); /* Dibuat sedikit lebih solid/jelas */
+        }
+        .user-info .card-text:last-child {
+            border-bottom: none;
+        }
+        
+        /* Ikon di sidebar dibuat ungu gelap agar kontras dengan latar belakang */
+        .user-info .bi {
+            color: var(--secondary-color); /* DIUBAH: Ikon menjadi UNGU GELAP */
+            margin-right: 8px;
+        }
+
+        /* Health Pill dibuat lebih kontras */
+        .health-pill {
+            padding: 0.3rem 0.8rem;
+            border-radius: 50rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 1px solid white; 
+            background-color: rgba(255, 255, 255, 0.9); /* Latar belakang hampir putih solid */
+            color: var(--secondary-color) !important; /* Teks berwarna ungu agar menonjol */
+        }
+        /* ==== AKHIR PERBAIKAN USER PROFILE ==== */
+
+        /* ==== CSS INI DIUBAH ==== */
         .action-group .btn {
-            margin-right: 0.75rem;
-            margin-bottom: 0.75rem;
+            /* margin-right dan margin-bottom dihapus, di-handle oleh Bootstrap Grid (g-2 dan mb-2) */
             border-radius: 0.5rem;
             font-weight: 500;
             transition: all 0.2s ease-in-out;
         }
+        /* ==== AKHIR CSS YANG DIUBAH ==== */
+        
         .action-group .btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 2px 8px var(--shadow-light);
@@ -116,23 +171,25 @@
             box-shadow: 0 6px 20px var(--shadow-medium);
         }
         .metric-card h5 {
-            color: var(--secondary-color);
+            color: var(--secondary-color); /* DIUBAH: Menggunakan warna sekunder baru */
             font-weight: 500;
         }
         .metric-card h3 {
             font-size: 2.2rem;
             font-weight: 700;
-            color: var(--primary-color);
+            color: var(--text-dark); /* DIUBAH: jadi gelap agar kontras */
         }
         .metric-card small {
             color: var(--text-muted);
             font-weight: 400;
+            margin-top: 0.5rem; /* Added margin for better placement */
+            display: block; /* Ensure it takes its own line */
         }
-        /* Specific metric card colors for visual variety */
-        .metric-card:nth-child(1) { border-left: 5px solid #007bff; } /* Blue */
-        .metric-card:nth-child(2) { border-left: 5px solid #28a745; } /* Green */
-        .metric-card:nth-child(3) { border-left: 5px solid #ffc107; } /* Yellow */
-        .metric-card:nth-child(4) { border-left: 5px solid #dc3545; } /* Red */
+        /* DIUBAH: Metric card colors menggunakan palet baru */
+        .metric-card:nth-child(1) { border-left: 5px solid var(--secondary-color); } /* Ungu */
+        .metric-card:nth-child(2) { border-left: 5px solid var(--primary-color); } /* Turquoise */
+        .metric-card:nth-child(3) { border-left: 5px solid #ffc107; } /* Kuning (tetap) */
+        .metric-card:nth-child(4) { border-left: 5px solid #dc3545; } /* Merah (tetap) */
 
 
         .health-pill {
@@ -199,7 +256,7 @@
             list-style: none;
         }
         .timeline-item {
-            border-left: 3px solid var(--primary-color);
+            border-left: 3px solid var(--primary-color); /* DIUBAH: Menggunakan warna primer baru */
             padding-left: 1rem;
             margin-bottom: 1rem;
             position: relative;
@@ -211,12 +268,12 @@
             top: 0;
             width: 0.75rem;
             height: 0.75rem;
-            background-color: var(--primary-color);
+            background-color: var(--primary-color); /* DIUBAH: Menggunakan warna primer baru */
             border-radius: 50%;
             border: 2px solid white;
         }
         .timeline-item strong {
-            color: var(--secondary-color);
+            color: var(--secondary-color); /* DIUBAH: Menggunakan warna sekunder baru */
             font-weight: 500;
         }
         .timeline-item span {
@@ -236,7 +293,7 @@
             border-top-right-radius: 0.75rem;
         }
         .modal-title {
-            color: var(--secondary-color);
+            color: var(--secondary-color); /* DIUBAH: Menggunakan warna sekunder baru */
             font-weight: 500;
         }
         .modal-footer {
@@ -254,10 +311,32 @@
             border-color: var(--border-light);
         }
         .form-control:focus, .form-select:focus {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.25);
+            border-color: var(--secondary-color); /* DIUBAH: Menggunakan warna sekunder baru */
+            /* DIUBAH: Shadow disesuaikan dengan warna sekunder baru (rgb(108, 99, 255)) */
+            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
         }
-    </style>
+
+        /* DITAMBAHKAN: Style baru untuk tombol agar sesuai tema */
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--primary-gradient);
+            opacity: 0.9;
+            color: white;
+        }
+        .btn-success {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #5a50e0; /* Versi lebih gelap dari --secondary-color */
+            border-color: #5a50e0;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -276,11 +355,11 @@
             <div class="col-md-3">
                 <div class="card shadow-sm mb-3 sidebar">
                     <div class="card-body user-info">
-                        <h3 class="card-title">User Profile</h3>
-                        <p class="card-text"><strong>ID:</strong> <span id="userId">N/A</span></p>
-                        <p class="card-text"><strong>Username:</strong> <span id="userUsername">N/A</span></p>
-                        <p class="card-text"><strong>Role:</strong> <span id="userRole">N/A</span></p>
-                        <p class="card-text"><strong>Service Status:</strong> <span id="sidebarHealth" class="health-pill">Unknown</span></p>
+                                                <h3 class="card-title"><i class="bi bi-person-circle me-2"></i>User Profile</h3>
+                                                <p class="card-text"><i class="bi bi-fingerprint me-2"></i><strong>ID:</strong> <span id="userId">N/A</span></p>
+                                                <p class="card-text"><i class="bi bi-person-badge me-2"></i><strong>Username:</strong> <span id="userUsername">N/A</span></p>
+                                                <p class="card-text"><i class="bi bi-shield-fill-check me-2"></i><strong>Role:</strong> <span id="userRole">N/A</span></p>
+                                                <p class="card-text"><i class="bi bi-activity me-2"></i><strong>Service Status:</strong> <span id="sidebarHealth" class="health-pill">Unknown</span></p>
                     </div>
                 </div>
             </div>
@@ -319,8 +398,8 @@
                                     <div class="card-body">
                                         <h5 class="card-title">Orders</h5>
                                         <h3 class="card-text" id="metricOrders">0</h3>
-                                        <small class="text-muted" id="metricOrdersMeta">Menunggu data</small>
                                     </div>
+                                    <small class="text-muted" id="metricOrdersMeta">Menunggu data</small>
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -328,8 +407,8 @@
                                     <div class="card-body">
                                         <h5 class="card-title">Payments (GMV)</h5>
                                         <h3 class="card-text" id="metricPayments">0</h3>
-                                        <small class="text-muted" id="metricPaymentsMeta">Menunggu data</small>
                                     </div>
+                                    <small class="text-muted" id="metricPaymentsMeta">Menunggu data</small>
                                 </div>
                             </div>
                         </div>
@@ -337,7 +416,6 @@
                         <div class="card shadow-sm mb-3">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">Gateway & Service Health</h5>
-                                <button id="refreshHealthBtn" class="btn btn-sm btn-outline-secondary">Refresh Health</button>
                             </div>
                             <div class="card-body">
                                 <span class="health-pill" id="healthStatus">Unknown</span>
@@ -348,55 +426,73 @@
                         </div>
                         
                         <div class="action-group mb-3">
-                            <button id="fetchUsersBtn" class="btn btn-primary">Fetch All Users</button>
-                            <button id="createUserBtn" class="btn btn-success">Create New User</button>
-                            <button id="fetchRestaurantsBtn" class="btn btn-primary">Fetch Restaurants</button>
-                            <button id="createRestaurantBtn" class="btn btn-success">Create New Restaurant</button>
-                            <button id="fetchOrdersBtn" class="btn btn-primary">Fetch Orders</button>
-                            <button id="createOrderBtn" class="btn btn-success">Create New Order</button>
-                            <button id="fetchPaymentsBtn" class="btn btn-primary">Fetch Payments</button>
-                            <button id="createPaymentBtn" class="btn btn-success">Create New Payment</button>
+                            <div class="row g-2 mb-2"> <div class="col">
+                                    <button id="fetchUsersBtn" class="btn btn-primary w-100">Fetch All Users</button>
+                                </div>
+                                <div class="col">
+                                    <button id="createUserBtn" class="btn btn-success w-100">Create New User</button>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col">
+                                    <button id="fetchRestaurantsBtn" class="btn btn-primary w-100">Fetch Restaurants</button>
+                                </div>
+                                <div class="col">
+                                    <button id="createRestaurantBtn" class="btn btn-success w-100">Create New Restaurant</button>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col">
+                                    <button id="fetchOrdersBtn" class="btn btn-primary w-100">Fetch Orders</button>
+                                </div>
+                                <div class="col">
+                                    <button id="createOrderBtn" class="btn btn-success w-100">Create New Order</button>
+                                </div>
+                            </div>
+                            <div class="row g-2"> <div class="col">
+                                    <button id="fetchPaymentsBtn" class="btn btn-primary w-100">Fetch Payments</button>
+                                </div>
+                                <div class="col">
+                                    <button id="createPaymentBtn" class="btn btn-success w-100">Create New Payment</button>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="card shadow-sm h-100">
+                                                <div class="row g-3">
+                                                        <div class="col-md-12">                                 <div class="card shadow-sm h-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0">Users</h5>
-                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="users">Reload</button>
+                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="users">Reload <!-- (Already present) --></button>
                                     </div>
                                     <div class="card-body table-responsive" id="usersTableContainer">
                                         <p class="text-muted">Klik tombol fetch untuk memuat data pengguna.</p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="card shadow-sm h-100">
+                                                        <div class="col-md-12">                                 <div class="card shadow-sm h-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0">Restaurants</h5>
-                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="restaurants">Reload</button>
+                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="restaurants">Reload <!-- (Already present) --></button>
                                     </div>
                                     <div class="card-body table-responsive" id="restaurantsTableContainer">
                                         <p class="text-muted">Menunggu data restoran.</p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="card shadow-sm h-100">
+                                                        <div class="col-md-12">                                 <div class="card shadow-sm h-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0">Orders</h5>
-                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="orders">Reload</button>
+                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="orders">Reload <!-- (Already present) --></button>
                                     </div>
                                     <div class="card-body table-responsive" id="ordersTableContainer">
                                         <p class="text-muted">Menunggu data order.</p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="card shadow-sm h-100">
+                                                        <div class="col-md-12">                                 <div class="card shadow-sm h-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0">Payments</h5>
-                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="payments">Reload</button>
+                                        <button class="btn btn-sm btn-outline-secondary section-refresh" data-service="payments">Reload <!-- (Already present) --></button>
                                     </div>
                                     <div class="card-body table-responsive" id="paymentsTableContainer">
                                         <p class="text-muted">Menunggu data pembayaran.</p>
@@ -404,8 +500,7 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="card shadow-sm mt-3">
+                                                <div class="card shadow-sm mt-3">
                             <div class="card-header">
                                 <h5 class="mb-0">Recent Cross-Service Activity</h5>
                             </div>
@@ -430,7 +525,6 @@
         </div>
     </div>
 
-    <!-- Generic Modal for CRUD Operations -->
     <div class="modal fade" id="crudModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -441,12 +535,11 @@
                 <form id="crudForm">
                     <div class="modal-body">
                         <div id="formFields">
-                            <!-- Form fields will be injected here by JavaScript -->
-                        </div>
+                            </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeModalBtn">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <button type="submit" class="btn btn-primary" id="saveChangesBtn">Save</button>
                     </div>
                 </form>
             </div>
@@ -455,7 +548,6 @@
 
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
-    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </body>
 </html>

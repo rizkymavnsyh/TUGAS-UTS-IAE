@@ -149,15 +149,20 @@ class ProcessPaymentResource(Resource):
             
             response = requests.put(balance_update_url, json=payload, timeout=10)
             
-            if response.status_code == 200:
-                new_transaction.status = 'SUCCESS'
-                db.session.commit()
-                return new_transaction.to_dict(), 200
-            else:
-                error_msg = response.json().get('error', 'Payment failed')
+            try:
+                if response.status_code == 200:
+                    new_transaction.status = 'SUCCESS'
+                    db.session.commit()
+                    return new_transaction.to_dict(), 200
+                else:
+                    error_msg = response.json().get('error', 'Payment failed')
+                    new_transaction.status = 'FAILED'
+                    db.session.commit()
+                    return {'error': error_msg}, 400
+            except requests.exceptions.JSONDecodeError:
                 new_transaction.status = 'FAILED'
                 db.session.commit()
-                return {'error': error_msg}, 400
+                return {'error': 'Failed to decode JSON response from user service.', 'response_text': response.text}, 502
 
         except requests.exceptions.RequestException as e:
             new_transaction.status = 'FAILED'

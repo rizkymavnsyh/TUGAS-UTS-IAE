@@ -10,6 +10,7 @@ class Order(db.Model):
     total_price = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), nullable=False, default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     items = db.relationship('OrderItem', backref='order', lazy=True)
 
     def to_dict(self):
@@ -20,6 +21,7 @@ class Order(db.Model):
             'total_price': self.total_price,
             'status': self.status,
             'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
             'items': [item.to_dict() for item in self.items]
         }
 

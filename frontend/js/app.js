@@ -56,15 +56,17 @@ document.addEventListener('DOMContentLoaded', () => {
             buttonId: 'fetchRestaurantsBtn',
             createButtonId: 'createRestaurantBtn',
             tableContainer: 'restaurantsTableContainer',
-            preferredColumns: ['id', 'name', 'address'],
+            preferredColumns: ['id', 'name', 'address', 'is_active'],
             formFields: {
                 create: [
                     { name: 'name', label: 'Restaurant Name', type: 'text', required: true },
-                    { name: 'address', label: 'Address', type: 'text', required: true }
+                    { name: 'address', label: 'Address', type: 'text', required: true },
+                    { name: 'is_active', label: 'Is Active', type: 'checkbox', required: false, defaultValue: true }
                 ],
                 update: [
                     { name: 'name', label: 'Restaurant Name', type: 'text', required: true },
-                    { name: 'address', label: 'Address', type: 'text', required: true }
+                    { name: 'address', label: 'Address', type: 'text', required: true },
+                    { name: 'is_active', label: 'Is Active', type: 'checkbox', required: false }
                 ]
             }
         },
@@ -81,7 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 create: [
                     { name: 'user_id', label: 'User ID', type: 'number', required: true },
                     { name: 'restaurant_id', label: 'Restaurant ID', type: 'number', required: true },
-                    { name: 'items', label: 'Items (JSON Array)', type: 'textarea', required: true, placeholder: '[{"menu_item_id": 1, "quantity": 1}]' }
+                    { name: 'menu_item_id', label: 'Menu Item ID', type: 'number', required: true },
+                    { name: 'quantity', label: 'Quantity', type: 'number', required: true }
                 ],
                 update: [
                     { name: 'status', label: 'Status', type: 'select', options: ['PENDING', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDED'], required: true }
@@ -349,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMetricCard('metricUsers', 'metricUsersMeta', state.users.length, summarizeRoles(state.users));
 
         const activeRestaurants = state.restaurants.filter((restaurant) => {
-            return isActiveValue(restaurant.status) || isActiveValue(restaurant.is_active) || isActiveValue(restaurant.isOpen);
+            return restaurant.is_active;
         }).length;
         updateMetricCard('metricRestaurants', 'metricRestaurantsMeta', state.restaurants.length, activeRestaurants ? `${activeRestaurants} aktif` : 'Status belum tersedia');
 
@@ -405,10 +408,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatCurrency(value) {
         const amount = Number(value) || 0;
+        // Format as USD with 2 decimal places
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
-            maximumFractionDigits: 0
+            minimumFractionDigits: 2, // Ensure 2 decimal places for USD
+            maximumFractionDigits: 2
         }).format(amount);
     }
 
@@ -580,12 +585,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputElement = document.createElement('textarea');
                 inputElement.className = 'form-control';
                 inputElement.rows = 4;
+            } else if (field.type === 'checkbox') {
+                inputElement = document.createElement('input');
+                inputElement.type = 'checkbox';
+                inputElement.className = 'form-check-input';
+                // Create a div for form-check to wrap the checkbox and label
+                const formCheckDiv = document.createElement('div');
+                formCheckDiv.className = 'form-check';
+                formCheckDiv.appendChild(inputElement);
+                label.className = 'form-check-label'; // Adjust label class for checkbox
+                formCheckDiv.appendChild(label);
+                div.appendChild(formCheckDiv); // Append the wrapper div instead of inputElement directly
             } else {
                 inputElement = document.createElement('input');
                 inputElement.type = field.type;
                 inputElement.className = 'form-control';
+                if (field.type === 'number' && (field.name === 'amount' || field.name === 'price')) {
+                    inputElement.step = 'any'; // Allow decimal input for amount and price
+                }
             }
             
+            if (field.type !== 'checkbox') { // Only append directly if not a checkbox
+                div.appendChild(inputElement);
+            }
+
             inputElement.id = field.name;
             inputElement.name = field.name;
             inputElement.required = field.required;
@@ -596,15 +619,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data && data[field.name] !== undefined) {
                 if (field.type === 'textarea' && typeof data[field.name] === 'object') {
                     inputElement.value = JSON.stringify(data[field.name], null, 2);
+                } else if (field.type === 'checkbox') {
+                    inputElement.checked = data[field.name];
                 } else {
                     inputElement.value = data[field.name];
                 }
             } else if (operation === 'create' && field.defaultValue !== undefined) {
-                inputElement.value = field.defaultValue;
+                if (field.type === 'checkbox') {
+                    inputElement.checked = field.defaultValue;
+                } else {
+                    inputElement.value = field.defaultValue;
+                }
             }
 
-            div.appendChild(inputElement);
-            formFieldsContainer.appendChild(div);
+            if (field.type !== 'checkbox') { // Append div to formFieldsContainer only once
+                formFieldsContainer.appendChild(div);
+            } else {
+                // If it's a checkbox, the formCheckDiv already contains the input and label
+                // and was appended to 'div'. Now append 'div' to 'formFieldsContainer'.
+                formFieldsContainer.appendChild(div);
+            }
         });
     }
 
@@ -616,7 +650,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fields.forEach(field => {
             const input = document.getElementById(field.name);
             if (input) {
-                let value = input.value;
+                let value;
+                if (field.type === 'checkbox') {
+                    value = input.checked;
+                } else {
+                    value = input.value;
+                }
+                
                 if (field.type === 'number') {
                     value = parseFloat(value);
                     if (isNaN(value)) value = null;
@@ -628,11 +668,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
                 }
-                if (value !== null && value !== '') {
+                // Only add to formData if value is not null or empty string (unless it's a boolean false)
+                if (value !== null && value !== '' || typeof value === 'boolean') {
                     formData[field.name] = value;
                 }
             }
         });
+
+        // Special handling for 'orders' create operation to construct the 'items' array
+        if (currentService === 'orders' && currentOperation === 'create') {
+            const menuItemId = formData['menu_item_id'];
+            const quantity = formData['quantity'];
+
+            if (menuItemId !== undefined && quantity !== undefined) {
+                formData['items'] = [{ menu_item_id: menuItemId, quantity: quantity }];
+                delete formData['menu_item_id'];
+                delete formData['quantity'];
+            } else {
+                alert('Menu Item ID and Quantity are required for creating an order.');
+                return; // Prevent submission if required fields are missing
+            }
+        }
 
         let response;
         if (currentOperation === 'create') {

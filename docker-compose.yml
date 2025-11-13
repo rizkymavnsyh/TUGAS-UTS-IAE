@@ -89,6 +89,18 @@ services:
       user-service:
         condition: service_started
 
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      api-gateway:
+        condition: service_started
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Exclude node_modules from host mount to prevent issues
+
 volumes:
   mysql_data:
   api_gateway_modules: {}
