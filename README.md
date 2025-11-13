@@ -848,25 +848,9 @@ food-delivery-microservices/
 3. 🔍 Pastikan environment variables sudah benar
 4. 🆘 Konsultasi dengan dosen pengampu
 
-### Submission Checklist:
-
-- [ ] Source code lengkap (semua folder service + dashboard)
-- [ ] `docker-compose.yml` bisa dijalankan langsung
-- [ ] `README.md` lengkap dengan cara setup
-- [ ] Postman collection (`uts-iae-collection-full-crud.json`)
-- [ ] Screenshot bukti pengujian (folder `docs/screenshots/`)
-- [ ] Presentasi slides (overview arsitektur + demo)
-
 ---
 
 ## 📄 License & Credits
-
-**Proyek:** Food Delivery Microservices System  
-**Mata Kuliah:** Integrasi Aplikasi Enterprise (IAE/EAI)  
-**Institusi:** [Nama Universitas]  
-**Semester:** [Semester & Tahun Akademik]  
-**Dosen Pengampu:** [Nama Dosen]
-
 **Tim Pengembang:**
 - Alvina Sulistina (102022300102) - Technical Writer
 - Mochamad Rizky Maulana Aviansyah (102022300021) - Full Stack Developer
@@ -877,7 +861,7 @@ food-delivery-microservices/
 
 **🚀 Happy Coding & Good Luck with UTS!**
 
-Made with ❤️ by Team Food Delivery Microservices
+Made with ❤️ by Kelompok 6
 
 ---
 
