@@ -50,46 +50,9 @@ Proyek ini mengimplementasikan sistem pemesanan makanan online yang terdiri dari
 
 ### Diagram Arsitektur
 
-```
-┌──────────────┐
-│    Client    │ (Browser - login.html / dashboard.html)
-│ (Port: File) │
-└──────┬───────┘
-       │ HTTP/JSON + JWT Bearer Token
-       ▼
-┌─────────────────────┐
-│   API Gateway       │ ← Single Entry Point (Port 3000)
-│   (Node.js + JWT)   │   • Authentication (login/refresh)
-│   Port: 3000        │   • Route forwarding & proxy
-└──────┬──────────────┘   • Role-based access control (admin/user)
-       │                   • CORS handling
-       │
-       │ Forward requests with X-User-Id headers
-       │
-   ┌───┴────┬────────────┬───────────┐
-   │        │            │           │
-   ▼        ▼            ▼           ▼
-┌────────┐ ┌──────────┐ ┌────────┐ ┌─────────┐
-│  User  │ │Restaurant│ │ Order  │ │ Payment │
-│Service │ │ Service  │ │Service │ │ Service │
-│ :3001  │ │  :3002   │ │ :3003  │ │  :3004  │
-│Provider│ │ Provider │ │Consumer│ │ Provider│
-└───┬────┘ └─────┬────┘ └───┬────┘ └────┬────┘
-    │            │           │           │
-    │            │   Inter-service HTTP  │
-    │            │   Communication       │
-    │            │   (Internal endpoints)│
-    │            │           │           │
-    └────────────┴───────────┴───────────┘
-                     │
-          ┌──────────┴──────────┐
-          ▼          ▼          ▼         ▼
-      ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐
-      │users│   │resto│   │order│   │pay  │
-      │_db  │   │_db  │   │_db  │   │_db  │
-      └─────┘   └─────┘   └─────┘   └─────┘
-         MySQL 8.0 (Port 3309 → 3306)
-```
+
+![alt text](<docs/Diagram/DIAGRAM ARSITEKTUR SISTEM.png>)
+
 
 ### Communication Flow
 
@@ -254,11 +217,11 @@ Sama seperti Order Service, sesuaikan:
 
 | Nama | NIM | Peran Utama | Kontribusi Detail |
 |------|-----|-------------|-------------------|
-| **Alvina Sulistina** | 102022300102 | **Technical Writer** | • Dokumentasi lengkap (README.md, API documentation)<br>• User manual & troubleshooting guide<br>• Screenshot dokumentasi (Swagger, Postman, Health Check)<br>• Quality assurance dokumentasi<br>• **User Service** (Flask):<br>&nbsp;&nbsp;◦ User CRUD operations<br>&nbsp;&nbsp;◦ Bcrypt password hashing<br>&nbsp;&nbsp;◦ JWT token generation & validation|
-| **Mochamad Rizky Maulana Aviansyah** | 102022300021 | **Full Stack Developer** | • **API Gateway** (Node.js + Express):<br>&nbsp;&nbsp;◦ JWT authentication & token management<br>&nbsp;&nbsp;◦ Request routing & proxy middleware<br>&nbsp;&nbsp;◦ CORS & error handling<br>• **Frontend Dashboard**:<br>&nbsp;&nbsp;◦ Login/dashboard UI dengan Bootstrap<br>&nbsp;&nbsp;◦ Real-time data fetching via fetch() API<br>&nbsp;&nbsp;◦ Metrics cards & activity timeline<br>• **Restaurant Service** (Flask):<br>&nbsp;&nbsp;◦ Restaurant & menu CRUD<br>&nbsp;&nbsp;◦ Menu item pricing logic|
-| **Bimo Alfarizy Lukman** | 102022330069 | **Documentation & QA Engineer** | • Postman collection lengkap (29 endpoints)<br>• Testing manual & automated (test scripts)<br>• Screenshot dokumentasi:<br>&nbsp;&nbsp;◦ Swagger UI (4 services)<br>&nbsp;&nbsp;◦ Postman requests & responses<br>&nbsp;&nbsp;◦ Health check endpoints<br>• Bug reporting & regression testing<br>• **Payment Service** (Flask):<br>&nbsp;&nbsp;◦ Payment transaction processing<br>&nbsp;&nbsp;◦ Balance validation & ledger<br>• Database schema design (MySQL)<br>• Inter-service communication architecture|
-| **Revaldo A. Nainggolan** | 102022330325 | **Backend Architect** |• Docker containerization setup<br>• Docker Compose orchestration<br>• MySQL database initialization (init-db.sql)<br>• Health check endpoints<br>• Service monitoring & logging<br>• **Order Service** (Flask):<br>&nbsp;&nbsp;◦ Order creation & status management |
-
+| **Alvina Sulistina** | 102022300102 | **Technical Writer** | • Dokumentasi lengkap (README.md, API documentation)<br>• User manual & troubleshooting guide<br>• Screenshot dokumentasi (Swagger, Postman, Health Check)<br>• Quality assurance dokumentasi |
+| **Mochamad Rizky Maulana Aviansyah** | 102022300021 | **Full Stack Developer** | • **API Gateway** (Node.js + Express):<br>&nbsp;&nbsp;◦ JWT authentication & token management<br>&nbsp;&nbsp;◦ Request routing & proxy middleware<br>&nbsp;&nbsp;◦ CORS & error handling<br>• **Frontend Dashboard**:<br>&nbsp;&nbsp;◦ Login/dashboard UI dengan Bootstrap<br>&nbsp;&nbsp;◦ Real-time data fetching via fetch() API<br>&nbsp;&nbsp;◦ Metrics cards & activity timeline |
+| **Bimo Alfarizy Lukman** | 102022330069 | **Documentation & QA Engineer** | • Postman collection lengkap (29 endpoints)<br>• Testing manual & automated (test scripts)<br>• Screenshot dokumentasi:<br>&nbsp;&nbsp;◦ Swagger UI (4 services)<br>&nbsp;&nbsp;◦ Postman requests & responses<br>&nbsp;&nbsp;◦ Health check endpoints<br>• Bug reporting & regression testing |
+| **Revaldo A. Nainggolan** | 102022330325 | **Backend Architect** | • **User Service** (Flask):<br>&nbsp;&nbsp;◦ User CRUD operations<br>&nbsp;&nbsp;◦ Bcrypt password hashing<br>&nbsp;&nbsp;◦ JWT token generation & validation<br>• **Restaurant Service** (Flask):<br>&nbsp;&nbsp;◦ Restaurant & menu CRUD<br>&nbsp;&nbsp;◦ Menu item pricing logic<br>• **Order Service** (Flask):<br>&nbsp;&nbsp;◦ Order creation & status management<br>&nbsp;&nbsp;◦ **Service orchestration**: calls User, Restaurant, Payment<br>&nbsp;&nbsp;◦ Transaction flow coordination<br>• **Payment Service** (Flask):<br>&nbsp;&nbsp;◦ Payment transaction processing<br>&nbsp;&nbsp;◦ Balance validation & ledger<br>• Database schema design (MySQL)<br>• Inter-service communication architecture |
+| **[Tim Bersama]** | - | **DevOps & Infrastructure** | • Docker containerization setup<br>• Docker Compose orchestration<br>• MySQL database initialization (init-db.sql)<br>• Health check endpoints<br>• Service monitoring & logging<br>• Integration testing & deployment |
 
 ---
 
@@ -756,6 +719,54 @@ Dokumentasi visual untuk membuktikan semua fitur berjalan dengan baik. Simpan sc
 ![Api Actions](<docs/screenshots/swagger/Api Actions.jpeg>)
 ![User Profile.jpeg](<docs/screenshots/swagger/User Profile.jpeg>)
 
+### 2️⃣ Postman Collection Testing
+
+#### Authentication
+![1. Authentication - POST REFRESH TOKEN](<docs/screenshots/postman/1. Authentication - POST REFRESH TOKEN.png>) 
+![1. Authentication - POST LOGIN](<docs/screenshots/postman/1. Authentication - POST LOGIN.png>) 
+![1. Authentication - POST SEED REA](<docs/screenshots/postman/1. Authentication - POST SEED READ.png>) 
+![1. Authentication - POST LOGIN AS USER](<docs/screenshots/postman/1. Authentication - POST LOGIN AS USER.png>)
+
+#### USER SERVICE - FULL CRUD
+![2. USER SERVICE - CREATE USER](<docs/screenshots/postman/2. USER SERVICE - CREATE USER.png>) 
+![2. USER SERVICE - DELETE USER](<docs/screenshots/postman/2. USER SERVICE - DELETE USER.png>) 
+![2. USER SERVICE - PUT UPDATE](<docs/screenshots/postman/2. USER SERVICE - PUT UPDATE.png>) 
+![2. USER SERVICE -GET ALL USER](<docs/screenshots/postman/2. USER SERVICE -GET ALL USER.png>) 
+![2. USER SERVICE -GET USER BY ID](<docs/screenshots/postman/2. USER SERVICE -GET USER BY ID.png>)
+
+#### RESTAURANT SERVICE - FULL CRUD
+![3. RESTAURANT SERV - GETALL RESTAURANT](<docs/screenshots/postman/3. RESTAURANT SERV - GETALL RESTAURANT.png>) 
+![3. RESTAURANT SERV - GET RESTAURANT BY ID](<docs/screenshots/postman/3. RESTAURANT SERV - GET RESTAURANT BY ID.png>) 
+![3. RESTAURANT SERV - POST CREATE RESTAURANT](<docs/screenshots/postman/3. RESTAURANT SERV - POST CREATE RESTAURANT.png>) 
+![3. RESTAURANT SERV -PUT UPDATE RESTAURANT](<docs/screenshots/postman/3. RESTAURANT SERV -PUT UPDATE RESTAURANT.png>) 
+![3. RESTAURANT SERV -POST CREATE RESTAURANT](<docs/screenshots/postman/3. RESTAURANT SERV -POST CREATE RESTAURANT.png>) 
+![3. RESTAURANT SERV - DELETE RESTAURANT](<docs/screenshots/postman/3. RESTAURANT SERV - DELETE RESTAURANT.png>)
+
+#### MENU ITEMS - FULL CRUD
+![4. MENU ITEMS - PUT UPDATE MENU ITEM](<docs/screenshots/postman/4. MENU ITEMS - PUT UPDATE MENU ITEM.png>) 
+![4. MENU ITEMS - DELETE MENU ITEM](<docs/screenshots/postman/4. MENU ITEMS - DELETE MENU ITEM.png>) 
+![4. MENU ITEMS - GET ALL MENU](<docs/screenshots/postman/4. MENU ITEMS - GET ALL MENU.png>) 
+![4. MENU ITEMS - GET MENU ITEM BY ID](<docs/screenshots/postman/4. MENU ITEMS - GET MENU ITEM BY ID.png>) 
+![4. MENU ITEMS - POST CREATE MENU ITEM](<docs/screenshots/postman/4. MENU ITEMS - POST CREATE MENU ITEM.png>)
+
+#### ORDER SERVICE
+![5. ORDER SERVICE - DELETE ORDER](<docs/screenshots/postman/5. ORDER SERVICE - DELETE ORDER.png>) 
+![5. ORDER SERVICE GET ALL ORDER](<docs/screenshots/postman/5. ORDER SERVICE GET ALL ORDER.png>) 
+![5. ORDER SERVICE - POST CREATE ORDER](<docs/screenshots/postman/docs/screenshots/postman/5. ORDER SERVICE - POST CREATE ORDER.png>) 
+![5. ORDER SERVICE - GET ORDER BY ID](<docs/screenshots/postman/5. ORDER SERVICE - GET ORDER BY ID.png>) 
+![5. ORDER SERVICE - UPDATE ORDER STATUS](<docs/screenshots/postman/5. ORDER SERVICE - UPDATE ORDER STATUS.png>)
+
+#### PAYMENT SERVICE - FULL CRUD
+![6. PAYMENT SERVICE - DELETE TRANSACTION](<docs/screenshots/postman/6. PAYMENT SERVICE - DELETE TRANSACTION.png>) 
+![6. PAYMENT SERVICE - GET ALL TRANSACTION](<docs/screenshots/postman/6. PAYMENT SERVICE - GET ALL TRANSACTION.png>) 
+![6. PAYMENT SERVICE - GET TRANSACTION BY ID](<docs/screenshots/postman/6. PAYMENT SERVICE - GET TRANSACTION BY ID.png>) 
+![6. PAYMENT SERVICE - POST PROCESS PAYMENT](<docs/screenshots/postman/6. PAYMENT SERVICE - POST PROCESS PAYMENT.png>) 
+![6. PAYMENT SERVICE - PUT UPDATE TRANSACTION](<docs/screenshots/postman/6. PAYMENT SERVICE - PUT UPDATE TRANSACTION.png>)
+
+### 3️⃣ Health Check
+![Health CHECK WEB](docs/screenshots/health-check/Health.jpeg) 
+![health-check](docs/screenshots/health-check/health-check.jpeg)
+
 ---
 
 ## 📦 Struktur Project
@@ -848,9 +859,25 @@ food-delivery-microservices/
 3. 🔍 Pastikan environment variables sudah benar
 4. 🆘 Konsultasi dengan dosen pengampu
 
+### Submission Checklist:
+
+- [ ] Source code lengkap (semua folder service + dashboard)
+- [ ] `docker-compose.yml` bisa dijalankan langsung
+- [ ] `README.md` lengkap dengan cara setup
+- [ ] Postman collection (`uts-iae-collection-full-crud.json`)
+- [ ] Screenshot bukti pengujian (folder `docs/screenshots/`)
+- [ ] Presentasi slides (overview arsitektur + demo)
+
 ---
 
 ## 📄 License & Credits
+
+**Proyek:** Food Delivery Microservices System  
+**Mata Kuliah:** Integrasi Aplikasi Enterprise (IAE/EAI)  
+**Institusi:** [Nama Universitas]  
+**Semester:** [Semester & Tahun Akademik]  
+**Dosen Pengampu:** [Nama Dosen]
+
 **Tim Pengembang:**
 - Alvina Sulistina (102022300102) - Technical Writer
 - Mochamad Rizky Maulana Aviansyah (102022300021) - Full Stack Developer
@@ -861,7 +888,7 @@ food-delivery-microservices/
 
 **🚀 Happy Coding & Good Luck with UTS!**
 
-Made with ❤️ by Kelompok 6
+Made with ❤️ by Team Food Delivery Microservices
 
 ---
 
