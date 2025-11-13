@@ -815,6 +815,7 @@ food-delivery-microservices/
 │       ├── auth.js
 │       └── app.js
 ├── docs/
+│   └── Diagram/
 │   └── screenshots/
 │       ├── swagger/
 │       ├── postman/
@@ -859,24 +860,15 @@ food-delivery-microservices/
 3. 🔍 Pastikan environment variables sudah benar
 4. 🆘 Konsultasi dengan dosen pengampu
 
-### Submission Checklist:
 
-- [ ] Source code lengkap (semua folder service + dashboard)
-- [ ] `docker-compose.yml` bisa dijalankan langsung
-- [ ] `README.md` lengkap dengan cara setup
-- [ ] Postman collection (`uts-iae-collection-full-crud.json`)
-- [ ] Screenshot bukti pengujian (folder `docs/screenshots/`)
-- [ ] Presentasi slides (overview arsitektur + demo)
 
 ---
 
 ## 📄 License & Credits
 
 **Proyek:** Food Delivery Microservices System  
-**Mata Kuliah:** Integrasi Aplikasi Enterprise (IAE/EAI)  
-**Institusi:** [Nama Universitas]  
-**Semester:** [Semester & Tahun Akademik]  
-**Dosen Pengampu:** [Nama Dosen]
+**Mata Kuliah:** Integrasi Aplikasi Enterprise 
+
 
 **Tim Pengembang:**
 - Alvina Sulistina (102022300102) - Technical Writer
